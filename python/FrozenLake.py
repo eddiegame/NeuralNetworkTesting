@@ -65,6 +65,7 @@ lear_rate   = 0.1
 muta_rate   = 0.3
 gamma       = 0.9
 observation = env.reset()
+done = False
 
 # Ein Debug print:
 if(nn.debug):
@@ -77,32 +78,33 @@ if(nn.debug):
     print ()
 	
 # Training Loop
-for i in range(0 ,5):
-	# Das Environemnt wird dargestellt
-    env.render()
-	# Die letzte observation wird gespeichert
-    oldObs = observation
-	# Das Neurale Netz ermittelt die Action mit dem höchsten Q-Wert für den aktuellen Stand
-    NextAction = nn.Qvalue(weights,nodes,absnodes,observation)
-	# Die beste Action wird ausgeführt
-    observation, reward, done, info = env.step(NextAction)
-	# Die durchgeführte Action wird gespeichert
-    found = False
-    
-    for idx, entry in enumerate(history):
-        # print("suche: " + str(oldObs) + "|" + str(NextAction) + "|" + str(observation) + " in history: " + entry[0] + "|" + entry[1] + "|" + entry[2])
-        if oldObs==entry[0] and NextAction==entry[1] and observation==entry[2]:
-            print(str(entry) + " already exist! -> count++")
-            entry[3] = int(entry[3])+1
-            print("idx: " + str(idx))
-            history[idx] = entry
-            print("hist bei idx" + str(history[idx]))
-            found = True
-    if found== False:
-        newEntry = [oldObs,NextAction,observation,1]
-        history.append(newEntry)
-        sorted(history, key=lambda x: x[0])
-    env.render()
+for e in range(episodes):
+	while(done == False):
+		# Das Environemnt wird dargestellt
+		env.render()
+		# Die letzte observation wird gespeichert
+		oldObs = observation
+		# Das Neurale Netz ermittelt die Action mit dem höchsten Q-Wert für den aktuellen Stand
+		NextAction = nn.Qvalue(weights,nodes,absnodes,observation)
+		# Die beste Action wird ausgeführt
+		observation, reward, done, info = env.step(NextAction)
+		# Die durchgeführte Action wird gespeichert
+		found = False
+		
+		for idx, entry in enumerate(history):
+			# print("suche: " + str(oldObs) + "|" + str(NextAction) + "|" + str(observation) + " in history: " + entry[0] + "|" + entry[1] + "|" + entry[2])
+			if oldObs==entry[0] and NextAction==entry[1] and observation==entry[2]:
+				print(str(entry) + " already exist! -> count++")
+				entry[3] = int(entry[3])+1
+				print("idx: " + str(idx))
+				history[idx] = entry
+				print("hist bei idx" + str(history[idx]))
+				found = True
+		if found== False:
+			newEntry = [oldObs,NextAction,observation,1]
+			history.append(newEntry)
+			sorted(history, key=lambda x: x[0])
+		env.render() #warum doppelt?
     
 # Die history wird ausgegeben
     print(history)
