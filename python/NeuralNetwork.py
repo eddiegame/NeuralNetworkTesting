@@ -3,6 +3,8 @@ Created on 02.09.2017
 @author: steffl&flemmig und nun?
 Bitte nicht die Dateien kaputt machen, danke
 bitte lass es jetzt funktionieren!!!
+
+Ist doch nicht so schwer oder?
 ''' 
 debug = True
 
