@@ -1,6 +1,6 @@
 '''
 Created on 02.09.2017
-@author: steffl&flemmig SmartGitDuSpast Eclipse geht auch!
+@author: steffl&flemmig und nun?
 ''' 
 debug = True
 
