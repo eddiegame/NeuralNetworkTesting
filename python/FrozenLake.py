@@ -41,6 +41,10 @@ absnodes = [np.zeros(Inputlenght),np.zeros(amountNodesHL),np.zeros(amountNodesHL
 # Nodes ist die Matrix mit den Nodewerten[Layer][Node] 
 # Sie wird mit der Anzahl der Nodes initialisiert
 
+# Matrix für History
+history = []
+
+
 print("filling weights with random..")
 #init weights
 for i in range(3):
@@ -71,8 +75,17 @@ if(nn.debug):
     print ()
     print(weights[2])
     print ()
+for i in range(0 ,2):
+    env.render()
+    oldObs = observation
+    NextAction = nn.Qvalue(weights,nodes,absnodes,observation)
+    observation, reward, done, info = env.step(NextAction)
+    newEntry = [oldObs,NextAction,observation,'1']
+    history.append(newEntry)
+    env.render()
+    
+print(history)
 
-nn.Qvalue(weights,nodes,absnodes,observation)
 '''
 for e in range(episodes):
     observation = env.reset()

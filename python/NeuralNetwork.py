@@ -7,7 +7,7 @@ bitte lass es jetzt funktionieren!!!
 Ist doch nicht so schwer oder?
 meine Fresse hat des lange gedauert bis ich des mal auf die Reihe bekommen hab
 ''' 
-debug = True
+debug = False
 
 import numpy as np
 
@@ -58,7 +58,7 @@ def Qvalue(weights, nodes, absnodes, observation):
     
     print()
     # 3. Outputs berechnen anhand von state und state + 1
-    
+    return np.argmax(nodes[3])
     # 4. state + action in matrix speichern
     
     
