@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 '''
 Created on 01.09.2017
-@author: steffl&flemmig
+@author: steffl&flemmig du spast
 '''
 
 import gym
