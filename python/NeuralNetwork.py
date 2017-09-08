@@ -5,6 +5,7 @@ Bitte nicht die Dateien kaputt machen, danke
 bitte lass es jetzt funktionieren!!!
 
 Ist doch nicht so schwer oder?
+meine Fresse hat des lange gedauert bis ich des mal auf die Reihe bekommen hab
 ''' 
 debug = True
 
