@@ -5,9 +5,9 @@ Created on 01.09.2017
 '''
 
 import gym
-import numpy as np 				#Notwendig für die Matritzenrechnung
-import random 					#Notwendig fpr die gernerierung von Zufallszahlen
-import NeuralNetwork as nn		#Beinhaltet das Neurale Netz
+import numpy as np                 #Notwendig für die Matritzenrechnung
+import random                     #Notwendig fpr die gernerierung von Zufallszahlen
+import NeuralNetwork as nn        #Beinhaltet das Neurale Netz
 
 if __name__ == '__main__':
     pass
@@ -20,9 +20,9 @@ env = gym.make('FrozenLake-v0')
 # Observations und Actions wird aus dem Environment geladen
 print("loading Spaces..")
 InputSum = env.observation_space
-Inputlenght = 16				#Anzahl der Inputs (Observation)
+Inputlenght = 16                #Anzahl der Inputs (Observation)
 OutputSum = env.action_space
-Outputlength = 4				#Anzahl der Output (Actions)
+Outputlength = 4                #Anzahl der Output (Actions)
 
 
 print("initializing weights and nodes matrix..")
@@ -60,7 +60,7 @@ print("weights randomly initliaized")
 
 # Hier beginnt der main Loop
 # Variablen:
-episodes = 500
+episodes = 5
 lear_rate   = 0.1
 muta_rate   = 0.3
 gamma       = 0.9
@@ -76,37 +76,38 @@ if(nn.debug):
     print ()
     print(weights[2])
     print ()
-	
+    
 # Training Loop
 for e in range(episodes):
-	observation = env.reset()
-	done = False
-	while(done == False):
-		# Das Environemnt wird dargestellt
-		env.render()
-		# Die letzte observation wird gespeichert
-		oldObs = observation
-		# Das Neurale Netz ermittelt die Action mit dem höchsten Q-Wert für den aktuellen Stand
-		NextAction = nn.Qvalue(weights,nodes,absnodes,observation)
-		# Die beste Action wird ausgeführt
-		observation, reward, done, info = env.step(NextAction)
-		# Die durchgeführte Action wird gespeichert
-		found = False
-		
-		for idx, entry in enumerate(history):
-			# print("suche: " + str(oldObs) + "|" + str(NextAction) + "|" + str(observation) + " in history: " + entry[0] + "|" + entry[1] + "|" + entry[2])
-			if oldObs==entry[0] and NextAction==entry[1] and observation==entry[2]:
-				print(str(entry) + " already exist! -> count++")
-				entry[3] = int(entry[3])+1
-				print("idx: " + str(idx))
-				history[idx] = entry
-				print("hist bei idx" + str(history[idx]))
-				found = True
-		if found== False:
-			newEntry = [oldObs,NextAction,observation,1]
-			history.append(newEntry)
-			sorted(history, key=lambda x: x[0])
-		env.render() #warum doppelt?
+    observation = env.reset()
+    done = False
+    while(done == False):
+        # Das Environemnt wird dargestellt
+        env.render()
+        # Die letzte observation wird gespeichert
+        oldObs = observation
+        # Das Neurale Netz ermittelt die Action mit dem höchsten Q-Wert für den aktuellen Stand
+        NextAction = nn.Qvalue(weights,nodes,absnodes,observation)
+        # Die beste Action wird ausgeführt
+        observation, reward, done, info = env.step(NextAction)
+        # Die durchgeführte Action wird gespeichert
+        found = False
+        
+        for idx, entry in enumerate(history):
+            # print("suche: " + str(oldObs) + "|" + str(NextAction) + "|" + str(observation) + " in history: " + entry[0] + "|" + entry[1] + "|" + entry[2])
+            if oldObs==entry[0] and NextAction==entry[1] and observation==entry[2]:
+                print(str(entry) + " already exist! -> count++")
+                entry[3] = int(entry[3])+1
+                print("idx: " + str(idx))
+                history[idx] = entry
+                print("hist bei idx" + str(history[idx]))
+                found = True
+        if found== False:
+            newEntry = [oldObs,NextAction,observation,1]
+            history.append(newEntry)
+            sorted(history, key=lambda x: x[0])
+        env.render() #warum doppelt?
+        print(history)
     
 # Die history wird ausgegeben
-    print(history)
+print(history)
