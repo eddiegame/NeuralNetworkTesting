@@ -1,6 +1,7 @@
 '''
 Created on 02.09.2017
 @author: steffl&flemmig und nun?
+Bitte nicht die Dateien kaputt machen, danke
 ''' 
 debug = True
 
