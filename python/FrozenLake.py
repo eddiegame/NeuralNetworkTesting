@@ -64,8 +64,8 @@ episodes = 500
 lear_rate   = 0.1
 muta_rate   = 0.3
 gamma       = 0.9
-observation = env.reset()
-done = False
+
+
 
 # Ein Debug print:
 if(nn.debug):
@@ -79,6 +79,8 @@ if(nn.debug):
 	
 # Training Loop
 for e in range(episodes):
+	observation = env.reset()
+	done = False
 	while(done == False):
 		# Das Environemnt wird dargestellt
 		env.render()
