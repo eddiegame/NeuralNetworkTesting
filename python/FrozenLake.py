@@ -9,6 +9,7 @@ import numpy as np                 #Notwendig für die Matritzenrechnung
 import random                     #Notwendig fpr die gernerierung von Zufallszahlen
 import NeuralNetwork as nn        #Beinhaltet das Neurale Netz
 
+
 if __name__ == '__main__':
     pass
 
@@ -20,25 +21,22 @@ env = gym.make('FrozenLake-v0')
 # Observations und Actions wird aus dem Environment geladen
 print("loading Spaces..")
 InputSum = env.observation_space
-Inputlenght = 16                #Anzahl der Inputs (Observation)
 OutputSum = env.action_space
-Outputlength = 4                #Anzahl der Output (Actions)
-
 
 print("initializing weights and nodes matrix..")
-amountNodesHL = Inputlenght + 1
+
 # Die Weight Matix wird initialisiert
 # Weights[Layer][Ziel][Quelle]
 # weights = [np.zeros((amountNodesHL,Inputlenght)),np.zeros((amountNodesHL,amountNodesHL)),np.zeros((Outputlength,amountNodesHL ))]
-weights = [np.zeros((amountNodesHL,Inputlenght)),np.zeros((amountNodesHL,amountNodesHL)),np.zeros((Outputlength,amountNodesHL ))]
+weights = nn.getZeroWeights()
 
 # Die Nodematrix enthält die Nodewerte welche durch die Sigmoid Funktion normalisiert wurden
 # nodes[Layer][Node]
-nodes = [np.zeros(Inputlenght),np.zeros(amountNodesHL),np.zeros(amountNodesHL),np.zeros(Outputlength)]
+nodes = nn.getZeroNodes()
 
 # Die AbsNodes Matrix enthält alle Nodewerte vor der Normalisierung mit der Sigmoid Funktion
 # absnodes[Layer][Node]
-absnodes = [np.zeros(Inputlenght),np.zeros(amountNodesHL),np.zeros(amountNodesHL),np.zeros(Outputlength)]
+absnodes = nn.getZeroNodes()
 
 # Die History Matrix enthält alle "gespielten" Actions, also Welche Action in welcher Observation wie oft vor kam
 history = []
@@ -52,7 +50,7 @@ print("filling weights with random..")
 for i in range(3):
     for x in range(len(weights[i])):
         for y in range(len(weights[i][x])):
-            weights[i][x][y] = random.uniform(0, 1)
+            weights[i][x][y] = random.uniform(0, 0.5)
             '''print(weights[i][x][y])'''
 
     
@@ -60,11 +58,11 @@ print("weights randomly initliaized")
 
 # Hier beginnt der main Loop
 # Variablen:
-episodes = 5
+episodes = 1
 lear_rate   = 0.1
 muta_rate   = 0.3
 gamma       = 0.9
-
+Zukunft     = 1
 
 
 # Ein Debug print:
@@ -86,8 +84,10 @@ for e in range(episodes):
         env.render()
         # Die letzte observation wird gespeichert
         oldObs = observation
+        rek = False
         # Das Neurale Netz ermittelt die Action mit dem höchsten Q-Wert für den aktuellen Stand
-        NextAction = nn.Qvalue(weights,nodes,absnodes,observation)
+        NextAction = nn.Qvalue(weights,nodes,absnodes,observation, history, rek, Zukunft)
+        print("choosen action", NextAction)
         # Die beste Action wird ausgeführt
         observation, reward, done, info = env.step(NextAction)
         # Die durchgeführte Action wird gespeichert
@@ -110,4 +110,7 @@ for e in range(episodes):
         print(history)
     
 # Die history wird ausgegeben
+        print("--------------------------------------------------------------------------------------")
 print(history)
+
+
