@@ -10,7 +10,7 @@ meine Fresse hat des lange gedauert bis ich des mal auf die Reihe bekommen hab
 debug = False
 
 import numpy as np
-
+import random as rm
 
 Inputlenght = 16                #Anzahl der Inputs (Observation)
 Outputlength = 4                #Anzahl der Output (Actions)
@@ -52,7 +52,11 @@ def train(environment, episodes, weights, history):
             
             # Das Neurale Netz ermittelt die Action mit dem höchsten Q-Wert für den aktuellen Stand
             print("\tCalculating Next Action by Qvalue...")
-            newZug = Qvalue(weights,observation, history, rek, Zukunft, future_rate, newZug)
+            if(rm.uniform(0,1)>muta_rate):
+                newZug = Qvalue(weights,observation, history, rek, Zukunft, future_rate, newZug)
+            else: 
+                newZug = [observation, rm.randint(0,3), 0]
+                
             GameHist.append(newZug)
             for idxx, zug in enumerate(GameHist):
                 if (idxx == len(GameHist)-1):
@@ -69,6 +73,7 @@ def train(environment, episodes, weights, history):
             
     # Die history wird ausgegeben
     printHistory(history)
+    printHistory(GameHist)
     
 def saveAction(history, oldObs, NextAction, observation):
     print("History: ") 
