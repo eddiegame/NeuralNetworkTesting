@@ -5,7 +5,6 @@ Created on 01.09.2017
 '''
 
 import gym
-import numpy as np                 #Notwendig für die Matritzenrechnung
 import random                     #Notwendig fpr die gernerierung von Zufallszahlen
 import NeuralNetwork as nn        #Beinhaltet das Neurale Netz
 
@@ -57,13 +56,6 @@ for i in range(3):
 print("weights randomly initliaized")
 
 # Hier beginnt der main Loop
-# Variablen:
-episodes = 1
-lear_rate   = 0.1
-muta_rate   = 0.3
-gamma       = 0.9
-Zukunft     = 1
-
 
 # Ein Debug print:
 if(nn.debug):
@@ -76,41 +68,6 @@ if(nn.debug):
     print ()
     
 # Training Loop
-for e in range(episodes):
-    observation = env.reset()
-    done = False
-    while(done == False):
-        # Das Environemnt wird dargestellt
-        env.render()
-        # Die letzte observation wird gespeichert
-        oldObs = observation
-        rek = False
-        # Das Neurale Netz ermittelt die Action mit dem höchsten Q-Wert für den aktuellen Stand
-        NextAction = nn.Qvalue(weights,nodes,absnodes,observation, history, rek, Zukunft)
-        print("choosen action", NextAction)
-        # Die beste Action wird ausgeführt
-        observation, reward, done, info = env.step(NextAction)
-        # Die durchgeführte Action wird gespeichert
-        found = False
-        
-        for idx, entry in enumerate(history):
-            # print("suche: " + str(oldObs) + "|" + str(NextAction) + "|" + str(observation) + " in history: " + entry[0] + "|" + entry[1] + "|" + entry[2])
-            if oldObs==entry[0] and NextAction==entry[1] and observation==entry[2]:
-                print(str(entry) + " already exist! -> count++")
-                entry[3] = int(entry[3])+1
-                print("idx: " + str(idx))
-                history[idx] = entry
-                print("hist bei idx" + str(history[idx]))
-                found = True
-        if found== False:
-            newEntry = [oldObs,NextAction,observation,1]
-            history.append(newEntry)
-            sorted(history, key=lambda x: x[0])
-        env.render() #warum doppelt?
-        print(history)
-    
-# Die history wird ausgegeben
-        print("--------------------------------------------------------------------------------------")
-print(history)
+nn.train(env,5,weights, history)
 
 

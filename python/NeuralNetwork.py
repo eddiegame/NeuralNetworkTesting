@@ -1,11 +1,6 @@
 '''
 Created on 02.09.2017
-@author: steffl&flemmig und nun?
-Bitte nicht die Dateien kaputt machen, danke
-bitte lass es jetzt funktionieren!!!
-
-Ist doch nicht so schwer oder?
-meine Fresse hat des lange gedauert bis ich des mal auf die Reihe bekommen hab
+@author: steffl&flemmig
 ''' 
 debug = False
 
@@ -14,39 +9,92 @@ import numpy as np
 
 Inputlenght = 16                #Anzahl der Inputs (Observation)
 Outputlength = 4                #Anzahl der Output (Actions)
-amountNodesHL = Inputlenght + 1
+amountNodesHL = Inputlenght + 1 #Anzahl der Nodes im Hidden Layer
 
+# Variablen des NN
+lear_rate   = 0.1
+muta_rate   = 0.3
+gamma       = 0.9
+Zukunft     = 1
+
+
+#Gibt ein Array mit Nullen gefüllt zurück (Nodes)
 def getZeroNodes():
     return [np.zeros(Inputlenght),np.zeros(amountNodesHL),np.zeros(amountNodesHL),np.zeros(Outputlength)]
+
+#Gibt ein Array mit Nullen gefüllt zurück (Weights)
 def getZeroWeights():
     return [np.zeros((amountNodesHL,Inputlenght)),np.zeros((amountNodesHL,amountNodesHL)),np.zeros((Outputlength,amountNodesHL ))]
-   
-
+    
+#Gibt das Ergebnis der Sigmoid Funktion für X zurück
 def sigmoid(x): return 1 / (1 + np.exp(-x))
 
-def Qvalue(weights, nodes, absnodes, observation, history, rek, future):
+#Funktion für das Training des NN
+def train(environment, episodes, weights, history):
+    env = environment
+    #Durchlaufe alle Episoden die übergeben werden
+    for e in range(episodes):
+        Observation = env.reset()   #Environemnt zurücksetzen
+        done = False
+        move = 0
+        print("## Episode: ",e,"##################################################################################")                
+        while(done == False):       #Druchlaufe die Schleife, bis entweder das Ziel oder ein Hole erreicht wird
+            # Das Environemnt wird dargestellt
+            print("-- Move:",move,"----------------------------------------------------------------------------------")  
+            env.render()
+            # Die letzte observation wird gespeichert
+            oldObservation = Observation
+            
+            # Das Neurale Netz ermittelt die Action mit dem höchsten Q-Wert für den aktuellen Stand
+            print("\tCalculating Next Action by Qvalue...")
+            NextAction = Qvalue(weights,Observation, history, False, Zukunft)
+            print("\n\tChoosen Action: ", NextAction)
+            
+            # Die beste Action wird ausgeführt
+            observation, reward, done, info = env.step(NextAction)
+            move+=1
+            print("\tAction Done - observation:",observation," reward:",reward," done:",done," info",info)
+            
+            # Die durchgeführte Action wird gespeichert
+            saveAction(history,oldObservation,NextAction, observation)
+            
+    # Die history wird ausgegeben
+    printHistory(history)
+    
+def saveAction(history, oldObs, NextAction, observation):
+    print("History: ") 
+    found = False
+    for idx, entry in enumerate(history):
+        if oldObs==entry[0] and NextAction==entry[1] and observation==entry[2]:
+            entry[3] = int(entry[3])+1
+            history[idx] = entry
+            found = True
+            print("\t Entry already exists: ",history[idx]," counter incremented")
+    if found== False:
+        newEntry = [oldObs,NextAction,observation,1]
+        history.append(newEntry)
+        sorted(history, key=lambda x: x[0])
+        print("\t new Entry added: ",newEntry)
+    print() 
+    
+def printHistory(history):
+    print("Full History:")
+    for entry in history:
+        print("\t",entry) 
+ 
+        
+def Qvalue(weights, observation, history, recursion, future):
     # reset Nodes and Absnodes
     nodes = getZeroNodes()
     absnodes = getZeroNodes()
-    # calculate Qvalue return the proper action
-    if(debug):
-        print("WeightMatrix")
-        print(weights)
-        print
-        print("NodeMatrix")
-        print(nodes)
-        print
-    Rektmp = rek
+    tmp_recursion = recursion
+    
     # 1. Einzelne Nodes berechnen Nodematrix erstellen
     # Inputs aus Observation in den InputLayer übernehmen
     nodes[0][observation]=1
-    if(debug):
-        print("Inputs in der NodeMatrix")
-        print(nodes)
-        print
-    # Berechne die Node Werte durch die Addition der Produkte aus weight und Node (beginne in Layer 1)
     
-    # für jeden Layer (beginne mit 1)
+    #print("\t\tCalculating Node values...")
+    # Berechne die Nodewerte durch die Addition der Produkte aus weight und Node (beginne in Layer 1)
     layer = 1
     while(layer < len(nodes)):
         # für jeden Node im Layer layer
@@ -61,68 +109,65 @@ def Qvalue(weights, nodes, absnodes, observation, history, rek, future):
                 weight+=1
             node+=1
         layer+=1
-        
-    if(debug):
-        print("Node Werte berechnet:")
-        print(nodes)
-        print
-    # 2. Aktivierungsfunktion auf hidden und output Layer anwenden
+    #print("\t\t\t...done")
     
-    # print(nodes)
-    tmpNodes3Values = np.zeros(len(nodes[3]))
-    print()
-    for QValuesss in range(0, len(nodes[3])):
-        print("ANFANG Zukunft: " + str(future) + " Index QValue: " + str(QValuesss) + " Wert: " + str(nodes[3][QValuesss]))
-        print(Rektmp)
-        if(Rektmp==False):
-            tmpNodes3Values[QValuesss] =  nodes[3][QValuesss]
+    #print("\t\tCalculating possible Futures ...")
+    tmp_OutValues = np.zeros(len(nodes[3]))
+    
+    if(tmp_recursion == False):
+        print("\t\tFuture start (MAIN)")
+    else:
+        print("\t\t\tFuture start: ",future)
+        
+    for QValueIndex in range(0, len(nodes[3])):
+        if(tmp_recursion == False):
+            print("\t\t\tIndex QValue: ",QValueIndex," Value: ",nodes[3][QValueIndex]," Recursion: ",tmp_recursion)
+        else:
+            print("\t\t\t\tIndex QValue: ",QValueIndex," Value: ",nodes[3][QValueIndex]," Recursion: ",tmp_recursion)
+        if(tmp_recursion==False):
+            tmp_OutValues[QValueIndex] =  nodes[3][QValueIndex]
         
     # 4 Q Values zwischenspeichern und Q-Value fkt rekursiv rufen
     gefunden = False
-    QValues = 0
     if future > 0:
-        print("--------------------- Future --------------------------")
         future=future-1
       
-        for QValues in range(len(nodes[3])):
-            print("++++++++++++++++++++ ", QValues,"++++++++++++++++++++++++++++++++")
+        for QValueIndex in range(len(nodes[3])):
             # der wahrscheinlichste nächste Zustand 
             gefunden= False
             wslZustand = 0
             wslZustandCount = 0
             for entry in history:
-                if (observation==entry[0] and QValues==entry[1]):
+                if (observation==entry[0] and QValueIndex==entry[1]):
                     if entry[3] > wslZustandCount:
                         wslZustand = entry[2]
                         wslZustandCount = entry[3]
                         # Rekursiv aufrufen von QValue, Rückgabe von QValue nötig! keine Aktion
                         rek = True
                         gefunden = True
-                print("---",wslZustand,"---",wslZustandCount,"-----")
+                #print("---",wslZustand,"---",wslZustandCount,"-----")
             if(gefunden==True):
-                print("nodes 3 bei " + str(QValues) + " = " + str(nodes[3][QValues]))
-                newQ = Qvalue(weights, nodes, absnodes, wslZustand, history, rek, future)
-                print("neuer QWert von Aktion: " + str(QValues) + ": " + str(tmpNodes3Values[QValues]) + "+" + str(newQ))
-                tmpNodes3Values[QValues] = (tmpNodes3Values[QValues] +  newQ)/2
-                print("Zukunft: " + str(future) + " Index QValue: " + str(QValues) + " Wert: " + str(nodes[3][QValues]))
-            print("++++++++++++++++++++ ", QValues," End++++++++++++++++++++++++++++++++")
-        print("--------------- Future End --------------------------")  
-    # Wiedergabe der QValues am Ende 
-    for QValuess in range(0, len(nodes[3])):
-        print("ENDE: Zukunft: " + str(future) + " Index QValue: " + str(QValuess) + " Wert: " + str(nodes[3][QValuess]))
-    if(Rektmp == False): 
-        for QValuess in range(0, len(nodes[3])):
-            print("ENDE-main: Zukunft: " + str(future) + " Index QValue: " + str(QValuess) + " Wert: " + str(tmpNodes3Values[QValuess])) 
+                print("\t\tOutputnode at ",QValueIndex," = ",nodes[3][QValueIndex])
+                newQ = Qvalue(weights, wslZustand, history, rek, future)
+                print("\t\tnew QValue for Action: ",QValueIndex," = ",tmp_OutValues[QValueIndex]," + ",newQ)
+                tmp_OutValues[QValueIndex] = (tmp_OutValues[QValueIndex] +  newQ)/2
+                print("\t\Future: ",future," Index QValue: ",QValueIndex," Value: ",nodes[3][QValueIndex])
+    
+    if(tmp_recursion == False):
+        print("\t\tFuture end (MAIN)")
+    else:
+        print("\t\t\tFuture end: ",future)
+    
+    for QValueIndexEnd in range(0, len(nodes[3])):
+        if(tmp_recursion == False):
+            print("\t\t\tIndex QValue: ",QValueIndexEnd," Value: ",nodes[3][QValueIndexEnd])
+        else:
+            print("\t\t\t\tIndex QValue: ",QValueIndexEnd," Value: ",nodes[3][QValueIndexEnd])
+        
+        
     # 3. Outputs berechnen anhand von state und state + 1
-    if(Rektmp == False):
-        return np.argmax(tmpNodes3Values)
+    if(tmp_recursion == False):
+        return np.argmax(tmp_OutValues)
     else:
         return nodes[3][np.argmax(nodes[3])]
     # 4. state + action in matrix speichern
-    
-    
- 
-    
-    
-    
-    
