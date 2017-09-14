@@ -49,7 +49,7 @@ def ouputcalc(GameHist):  # absnodes für die Größe des Arrays
                 BpropNodes[index][2][i] = entry[len(entry)-2] * arctanh((entry[len(entry)-1])[2][1])
     print("BpropNodes")
     print(BpropNodes)
-    return BpropNodes
+    return None
 
 
 # Ableitung von tanh
