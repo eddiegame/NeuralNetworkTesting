@@ -82,6 +82,7 @@ def train(environment, episodes, weights, history):
             # Die durchgeführte Action wird gespeichert
             saveAction(history,oldObs,NextAction, observation)
         tr.loss(GameHist)
+        #tr.ouputcalc(GameHist)
         # anpassen der muta_rate (Zufall wird weniger)
         # muta_rate=muta_rate-muta_rate_red  
         

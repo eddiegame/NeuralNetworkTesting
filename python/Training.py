@@ -26,7 +26,7 @@ def loss(GameHist):
                         for idx, zuege in enumerate(GameHist):
                             if(idx != len(GameHist)-1):
                                 if(zuege[len(zuege)-2] == 0):
-                                    zuege[len(zuege)-2]=zug[len(zug)-2]/10
+                                    zuege[len(zuege)-2]=0.1 # ug[len(zug)-2]/10
                     else:
                         for idx, zuege in enumerate(GameHist):
                             if(idx != len(GameHist)-1 ):
@@ -34,14 +34,15 @@ def loss(GameHist):
                                     zuege[len(zuege)-2]=-0.1
                             else:
                                 zuege[len(zuege)-2]=-1
-    nn.printHistory(GameHist)
+    #print("Rewards angepasst")
+    #nn.printHistory(GameHist)
 # Idee von Eddi 
 # 1.2 Gamma von i Berechnen = -L* Abl. von Aktivierungsfk(von Array tmp1) von Hidden Layers und Output
 def ouputcalc(GameHist):  # absnodes für die Größe des Arrays
     for entry in GameHist:
         absnodes = entry[4]
     # Ziel: alle Absnodes zwischenspeicher... also großes Array mit 1 dim: länge der Game hist und ab der 2ten Dim abs nodes kopieren
-    BpropNodes = np.matrix(np.zeros(len(GameHist)),np.zeros(len(absnodes)),np.zeros(len(absnodes[0])))
+    BpropNodes = [np.zeros(len(GameHist)),np.zeros(len(absnodes)),np.zeros(len(absnodes[0]))]
     for index, entry in enumerate(GameHist):
         for i in range(len(BpropNodes[index][2])):
             # wichtig: nur bei dem genommenen den Loss betrachen! alle anderen sind 0
