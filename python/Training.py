@@ -42,7 +42,19 @@ def ouputcalc(GameHist):  # absnodes für die Größe des Arrays
     for entry in GameHist:
         absnodes = entry[4]
     # Ziel: alle Absnodes zwischenspeicher... also großes Array mit 1 dim: länge der Game hist und ab der 2ten Dim abs nodes kopieren
-    BpropNodes = [np.zeros(len(GameHist)),np.zeros(len(absnodes)),np.zeros(len(absnodes[0]))]
+    
+	#LÄUFT [EDDIE]
+    BpropNodes = [[np.zeros(nn.Inputlenght),np.zeros(nn.amountNodesHL),np.zeros(nn.amountNodesHL),np.zeros(nn.Outputlength)] for GH in range(len(GameHist))]
+    for GameIndex in range(len(GameHist)):
+        LayerIndex = 0
+        while(LayerIndex < len(BpropNodes[GameIndex])):
+            NodeIndex = 0
+            while(NodeIndex < len(BpropNodes[GameIndex][LayerIndex])):
+                BpropNodes[GameIndex][LayerIndex][NodeIndex] = absnodes[LayerIndex][NodeIndex] 
+                NodeIndex+=1
+            LayerIndex+=1
+    #LÄUFT [EDDIE]
+	
     for index, entry in enumerate(GameHist):
         for i in range(len(BpropNodes[index][2])):
             # wichtig: nur bei dem genommenen den Loss betrachen! alle anderen sind 0
