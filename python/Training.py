@@ -25,11 +25,13 @@ def loss(GameHist):
                     if(zug[len(zug)-2] == 1.0):
                         for idx, zuege in enumerate(GameHist):
                             if(idx != len(GameHist)-1):
-                                zuege[len(zuege)-2]=0.1
+                                if(zuege[len(zuege)-2] == 0):
+                                    zuege[len(zuege)-2]=zug[len(zug)-2]/10
                     else:
                         for idx, zuege in enumerate(GameHist):
-                            if(idx != len(GameHist)-1):
-                                zuege[len(zuege)-2]=-0.1
+                            if(idx != len(GameHist)-1 ):
+                                if(zuege[len(zuege)-2] == 0):
+                                    zuege[len(zuege)-2]=-0.1
                             else:
                                 zuege[len(zuege)-2]=-1
     nn.printHistory(GameHist)
@@ -39,7 +41,12 @@ def ouputcalc(GameHist):  # absnodes für die Größe des Arrays
     for entry in GameHist:
         absnodes = entry[4]
     # Ziel: alle Absnodes zwischenspeicher... also großes Array mit 1 dim: länge der Game hist und ab der 2ten Dim abs nodes kopieren
-    BpropNodes = [np.zeros(len(GameHist)), np.full_like(absnodes, 0)]
+    BpropNodes = np.matrix(np.zeros(len(GameHist)),np.zeros(len(absnodes)),np.zeros(len(absnodes[0])))
+    for index, entry in enumerate(GameHist):
+        for i in range(len(BpropNodes[index][2])):
+            # wichtig: nur bei dem genommenen den Loss betrachen! alle anderen sind 0
+            if(entry[1] == np.argmax((entry[len(entry)-1])[2][i])):
+                BpropNodes[index][2][i] = entry[len(entry)-2] * arctanh((entry[len(entry)-1])[2][1])
     print("BpropNodes")
     print(BpropNodes)
     return BpropNodes
