@@ -11,6 +11,8 @@ debug = False
 
 import numpy as np
 import random as rm
+import math
+import Training as tr
 
 Inputlenght = 16                #Anzahl der Inputs (Observation)
 Outputlength = 4                #Anzahl der Output (Actions)
@@ -20,11 +22,12 @@ GameHist = []
 Zug = 0
 
 # Variablen:
-lear_rate   = 0.1
-muta_rate   = 0.3
-gamma       = 0.9
-Zukunft     = 1
-future_rate = 0.3
+lear_rate       = 0.1
+muta_rate       = 0.3
+muta_rate_red   = 0.01
+gamma           = 0.9
+Zukunft         = 1
+future_rate     = 0.3
 
 def getZeroNodes():
     return [np.zeros(Inputlenght),np.zeros(amountNodesHL),np.zeros(amountNodesHL),np.zeros(Outputlength)]
@@ -32,6 +35,7 @@ def getZeroWeights():
     return [np.zeros((amountNodesHL,Inputlenght)),np.zeros((amountNodesHL,amountNodesHL)),np.zeros((Outputlength,amountNodesHL ))]
    
 def sigmoid(x): return 1 / (1 + np.exp(-x))
+def tanh(x): return math.tanh(x)
 
 def train(environment, episodes, weights, history):
     env = environment
@@ -41,7 +45,8 @@ def train(environment, episodes, weights, history):
         done = False
         move = 0
         newZug= None
-        print("## Episode: ",e,"##################################################################################")                
+        print("## Episode: ",e,"##################################################################################")    
+        GameHist.clear()            
         while(done == False):       #Druchlaufe die Schleife, bis entweder das Ziel oder ein Hole erreicht wird
             # Das Environemnt wird dargestellt
             print("-- Move:",move,"----------------------------------------------------------------------------------")  
@@ -53,10 +58,12 @@ def train(environment, episodes, weights, history):
             # Das Neurale Netz ermittelt die Action mit dem höchsten Q-Wert für den aktuellen Stand
             print("\tCalculating Next Action by Qvalue...")
             if(rm.uniform(0,1)>muta_rate):
-                newZug = Qvalue(weights,observation, history, rek, Zukunft, future_rate, newZug)
+                newZug = Qvalue(weights,observation, history, rek, Zukunft, future_rate, newZug, False)
             else: 
-                newZug = [observation, rm.randint(0,3), 0]
+                newZug = Qvalue(weights,observation, history, rek, 0, future_rate, newZug, True)
+                print("\tRandom")
                 
+             
             GameHist.append(newZug)
             for idxx, zug in enumerate(GameHist):
                 if (idxx == len(GameHist)-1):
@@ -65,16 +72,26 @@ def train(environment, episodes, weights, history):
             
             # Die beste Action wird ausgeführt
             observation, reward, done, info = env.step(NextAction)
+            for idxx, zug in enumerate(GameHist):
+                if (idxx == len(GameHist)-1):
+                    zug[len(zug)-2] = int(reward)
+                    GameHist[idxx] = zug
             move+=1
             print("\tAction Done - observation:",observation," reward:",reward," done:",done," info",info)
             
             # Die durchgeführte Action wird gespeichert
             saveAction(history,oldObs,NextAction, observation)
-            
+        tr.loss(GameHist)
+        # anpassen der muta_rate (Zufall wird weniger)
+        # muta_rate=muta_rate-muta_rate_red  
+        
     # Die history wird ausgegeben
     printHistory(history)
     printHistory(GameHist)
-    
+    # für jeden Zug muss jetzt Bprop angewendet werden, und dazu die dementsprechenden Nodes übergeben!! benötigt werden absnodes des Zuges + weights
+    # for zuege in (len(GameHist)):
+    tr.ouputcalc(GameHist)
+        
 def saveAction(history, oldObs, NextAction, observation):
     print("History: ") 
     found = False
@@ -97,7 +114,7 @@ def printHistory(history):
         print("\t",entry) 
  
 
-def Qvalue(weights, observation, history, rek, future, future_rate, newZug):
+def Qvalue(weights, observation, history, rek, future, future_rate, newZug, rando):
     # reset Nodes and Absnodes
     nodes = getZeroNodes()
     absnodes = getZeroNodes()
@@ -119,7 +136,7 @@ def Qvalue(weights, observation, history, rek, future, future_rate, newZug):
             while(weight < len(weights[layer-1][node])):
                 # aktueller node += weight des Pfades (layer-1) * node im vorherigen Layer von dem der Pfad kommt
                 absnodes[layer][node]+=(weights[layer-1][node][weight]*nodes[layer-1][weight])
-                nodes[layer][node] = sigmoid(absnodes[layer][node])
+                nodes[layer][node] = tanh(absnodes[layer][node])
                 weight+=1
             node+=1
         layer+=1
@@ -134,6 +151,8 @@ def Qvalue(weights, observation, history, rek, future, future_rate, newZug):
     for QValuesss in range(0, len(nodes[3])):
         if(Rektmp == False):
             print("\t\t\tIndex QValue: ",QValuesss," Value: ",nodes[3][QValuesss]," Recursion: ",Rektmp)
+            absnodescopy = np.full_like(absnodes, 0)
+            np.copyto(absnodescopy,absnodes)
         else:
             print("\t\t\t\tIndex QValue: ",QValuesss," Value: ",nodes[3][QValuesss]," Recursion: ",Rektmp)
         if(Rektmp==False):
@@ -160,7 +179,7 @@ def Qvalue(weights, observation, history, rek, future, future_rate, newZug):
                         gefunden = True
             if(gefunden==True):
                 print("\t\tOutputnode at ",QValues," = ",nodes[3][QValues])
-                newQ = Qvalue(weights, wslZustand, history, rek, future, future_rate, newZug)
+                newQ = Qvalue(weights, wslZustand, history, rek, future, future_rate, newZug, False)
                 tmpNodes3Values[QValues] = (tmpNodes3Values[QValues] +  future_rate*newQ)/2 # Future rate wegen Bellmann -> Zukunft ist nicht immer gleich # 
                 print("\t\Future: ",future," Index QValue: ",QValues," Value: ",nodes[3][QValues])
             else:
@@ -177,7 +196,11 @@ def Qvalue(weights, observation, history, rek, future, future_rate, newZug):
             print("\t\t\t\tIndex QValue: ",QValuess," Value: ",tmpNodes3Values[QValuess])
     # 3. Outputs berechnen anhand von state und state + 1
     if(Rektmp == False):
-        newZug = [oldObs, np.argmax(tmpNodes3Values), tmpNodes3Values[np.argmax(tmpNodes3Values)]]
+        if(rando==False):
+            newZug = [oldObs, np.argmax(tmpNodes3Values), tmpNodes3Values[np.argmax(tmpNodes3Values)], 0, absnodescopy] # Obs, Aktion, QValue, Reward, 
+        else:
+            nActiontmp = rm.randint(0,3)
+            newZug = [oldObs, nActiontmp, tmpNodes3Values[nActiontmp], 0, absnodescopy]
         return newZug # np.argmax(tmpNodes3Values)
     else:
         return nodes[3][np.argmax(nodes[3])]

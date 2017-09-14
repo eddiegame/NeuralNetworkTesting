@@ -8,6 +8,7 @@ import gym
 import numpy as np                 #Notwendig für die Matritzenrechnung
 import random                     #Notwendig fpr die gernerierung von Zufallszahlen
 import NeuralNetwork as nn        #Beinhaltet das Neurale Netz
+import math as m
 
 
 # Wenn Done und Reward=0 -> Loch dann ist Reward -1
@@ -17,9 +18,36 @@ import NeuralNetwork as nn        #Beinhaltet das Neurale Netz
 # Da GameHistorie übergeben wird wenn am Ende Win wird alles mit reward 0,1 berechnet... 0,1 wird eine Variable sein 
 
 # 1.1 Loss für einzelne Aktionen in History berechnen und anpassen
-
+# Idee von Andi
+def loss(GameHist):
+    for idxx, zug in enumerate(GameHist):
+                if (idxx == len(GameHist)-1):
+                    if(zug[len(zug)-2] == 1.0):
+                        for idx, zuege in enumerate(GameHist):
+                            if(idx != len(GameHist)-1):
+                                zuege[len(zuege)-2]=0.1
+                    else:
+                        for idx, zuege in enumerate(GameHist):
+                            if(idx != len(GameHist)-1):
+                                zuege[len(zuege)-2]=-0.1
+                            else:
+                                zuege[len(zuege)-2]=-1
+    nn.printHistory(GameHist)
+# Idee von Eddi 
 # 1.2 Gamma von i Berechnen = -L* Abl. von Aktivierungsfk(von Array tmp1) von Hidden Layers und Output
+def ouputcalc(GameHist):  # absnodes für die Größe des Arrays
+    for entry in GameHist:
+        absnodes = entry[4]
+    # Ziel: alle Absnodes zwischenspeicher... also großes Array mit 1 dim: länge der Game hist und ab der 2ten Dim abs nodes kopieren
+    BpropNodes = [np.zeros(len(GameHist)), np.full_like(absnodes, 0)]
+    print("BpropNodes")
+    print(BpropNodes)
+    return BpropNodes
 
+
+# Ableitung von tanh
+def arctanh(x): return 0.5*m.log2((1+x)/(1-x))
+     
 # 2.1 Werte der einzelnen Nodes Berechnen  anhand  der ausgehenden weights + des nächsten Nodes  -> in neue Matrix speichern tmp3
 
 # 2.2 weights berechnen und änderung in Matrix schreiben
