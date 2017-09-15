@@ -59,14 +59,14 @@ def ouputcalc(GameHist):  # absnodes für die Größe des Arrays
         for i in range(len(BpropNodes[index][2])):
             # wichtig: nur bei dem genommenen den Loss betrachen! alle anderen sind 0
             if(entry[1] == np.argmax((entry[len(entry)-1])[2][i])):
-                BpropNodes[index][2][i] = entry[len(entry)-2] * arctanh((entry[len(entry)-1])[2][1])
+                BpropNodes[index][2][i] = entry[len(entry)-2] * m.atanh((entry[len(entry)-1])[2][1])
     print("BpropNodes")
     print(BpropNodes)
     return None
 
 
 # Ableitung von tanh
-def arctanh(x): return 0.5*m.log2((1+x)/(1-x))
+
      
 # 2.1 Werte der einzelnen Nodes Berechnen  anhand  der ausgehenden weights + des nächsten Nodes  -> in neue Matrix speichern tmp3
 
