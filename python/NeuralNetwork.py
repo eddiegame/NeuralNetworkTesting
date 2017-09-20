@@ -16,7 +16,7 @@ import Training as tr
 
 Inputlenght = 16                #Anzahl der Inputs (Observation)
 Outputlength = 4                #Anzahl der Output (Actions)
-amountNodesHL = Inputlenght + 1
+AmountNodesHL = Inputlenght + 1
 
 GameHist = []
 Zug = 0
@@ -30,14 +30,15 @@ Zukunft         = 1
 future_rate     = 0.3
 
 def getZeroNodes():
-    return [np.zeros(Inputlenght),np.zeros(amountNodesHL),np.zeros(amountNodesHL),np.zeros(Outputlength)]
+    return [np.zeros(Inputlenght),np.zeros(AmountNodesHL),np.zeros(AmountNodesHL),np.zeros(Outputlength)]
 def getZeroWeights():
-    return [np.zeros((amountNodesHL,Inputlenght)),np.zeros((amountNodesHL,amountNodesHL)),np.zeros((Outputlength,amountNodesHL ))]
+    return [np.zeros((AmountNodesHL,Inputlenght)),np.zeros((AmountNodesHL,AmountNodesHL)),np.zeros((Outputlength,AmountNodesHL ))]
    
 def sigmoid(x): return 1 / (1 + np.exp(-x))
+
 def tanh(x): return math.tanh(x)
 
-def train(environment, episodes, weights, history):
+def learn(environment, episodes, weights, History):
     env = environment
     #Durchlaufe alle Episoden die übergeben werden
     for e in range(episodes):
@@ -52,70 +53,80 @@ def train(environment, episodes, weights, history):
             print("-- Move:",move,"----------------------------------------------------------------------------------")  
             env.render()
             # Die letzte observation wird gespeichert
-            oldObs = observation
+            LastObs = observation
             rek = False
             
             # Das Neurale Netz ermittelt die Action mit dem höchsten Q-Wert für den aktuellen Stand
             print("\tCalculating Next Action by Qvalue...")
             if(rm.uniform(0,1)>muta_rate):
-                newZug = Qvalue(weights,observation, history, rek, Zukunft, future_rate, newZug, False)
+                newZug = getQvalue(weights,observation, History, rek, Zukunft, future_rate, newZug, False)
             else: 
-                newZug = Qvalue(weights,observation, history, rek, 0, future_rate, newZug, True)
+                newZug = getQvalue(weights,observation, History, rek, 0, future_rate, newZug, True)
                 print("\tRandom")
                 
              
             GameHist.append(newZug)
-            for idxx, zug in enumerate(GameHist):
-                if (idxx == len(GameHist)-1):
-                    NextAction=int(zug[1])
+            for Index, Zug in enumerate(GameHist):
+                if (Index == len(GameHist)-1):
+                    NextAction=int(Zug[1])
             print("\n\tChoosen Action: ", NextAction)
             
             # Die beste Action wird ausgeführt
             observation, reward, done, info = env.step(NextAction)
-            for idxx, zug in enumerate(GameHist):
-                if (idxx == len(GameHist)-1):
-                    zug[len(zug)-2] = int(reward)
-                    GameHist[idxx] = zug
+            for Index, Zug in enumerate(GameHist):
+                if (Index == len(GameHist)-1):
+                    Zug[len(Zug)-2] = int(reward)
+                    GameHist[Index] = Zug
             move+=1
             print("\tAction Done - observation:",observation," reward:",reward," done:",done," info",info)
             
             # Die durchgeführte Action wird gespeichert
-            saveAction(history,oldObs,NextAction, observation)
-        tr.loss(GameHist)
+            saveAction(History,LastObs,NextAction, observation)
+        # für jeden Zug muss jetzt Bprop angewendet werden, und dazu die dementsprechenden Nodes übergeben!! benötigt werden absnodes des Zuges + weights
+        Bpropnodes = tr.createBpropNodes()
+        printHistory(GameHist)
+        for Index, ZugReverse in enumerate(reversed(GameHist)):
+            ZugReverse = tr.loss(ZugReverse)
+            # BpropNodes = tr.ouputcalc(Bpropnodes, ZugReverse, Index)
+            #print("\tBpropNodes")
+            #printHistory(BpropNodes)
         #tr.ouputcalc(GameHist)
         # anpassen der muta_rate (Zufall wird weniger)
         # muta_rate=muta_rate-muta_rate_red  
         
-    # Die history wird ausgegeben
-    printHistory(history)
-    printHistory(GameHist)
-    # für jeden Zug muss jetzt Bprop angewendet werden, und dazu die dementsprechenden Nodes übergeben!! benötigt werden absnodes des Zuges + weights
-    # for zuege in (len(GameHist)):
-    tr.ouputcalc(GameHist)
+    # Die History wird ausgegeben
+    printHistory(History)
+    
+
+
+
+
         
-def saveAction(history, oldObs, NextAction, observation):
+def saveAction(History, oldObs, NextAction, observation):
     print("History: ") 
     found = False
-    for idx, entry in enumerate(history):
-        if oldObs==entry[0] and NextAction==entry[1] and observation==entry[2]:
-            entry[3] = int(entry[3])+1
-            history[idx] = entry
+    for Index, Entry in enumerate(History):
+        if oldObs==Entry[0] and NextAction==Entry[1] and observation==Entry[2]:
+            Entry[3] = int(Entry[3])+1
+            History[Index] = Entry
             found = True
-            print("\t Entry already exists: ",history[idx]," counter incremented")
-    if found== False:
+            print("\t Entry already exists: ",History[Index]," counter incremented")
+    if found==False:
         newEntry = [oldObs,NextAction,observation,1]
-        history.append(newEntry)
-        sorted(history, key=lambda x: x[0])
+        History.append(newEntry)
+        sorted(History, key=lambda x: x[0])
         print("\t new Entry added: ",newEntry)
     print() 
     
-def printHistory(history):
+def printHistory(History):
     print("Full History:")
-    for entry in history:
-        print("\t",entry) 
+    for Index, Entry in enumerate(History):
+        print("Index: ", Index)
+        print("\t",Entry) 
+        print("")
  
 
-def Qvalue(weights, observation, history, rek, future, future_rate, newZug, rando):
+def getQvalue(weights, observation, History, rek, future, future_rate, newZug, rand):
     # reset Nodes and Absnodes
     nodes = getZeroNodes()
     absnodes = getZeroNodes()
@@ -137,12 +148,12 @@ def Qvalue(weights, observation, history, rek, future, future_rate, newZug, rand
             while(weight < len(weights[layer-1][node])):
                 # aktueller node += weight des Pfades (layer-1) * node im vorherigen Layer von dem der Pfad kommt
                 absnodes[layer][node]+=(weights[layer-1][node][weight]*nodes[layer-1][weight])
-                nodes[layer][node] = tanh(absnodes[layer][node])
+                nodes[layer][node] = sigmoid(absnodes[layer][node])
                 weight+=1
             node+=1
         layer+=1
         
-    tmpNodes3Values = np.zeros(len(nodes[3]))
+    SavedNodes = getZeroNodes()[3]
     
     if(Rektmp == False):
         print("\t\tFuture start (MAIN)")
@@ -154,55 +165,56 @@ def Qvalue(weights, observation, history, rek, future, future_rate, newZug, rand
             print("\t\t\tIndex QValue: ",QValuesss," Value: ",nodes[3][QValuesss]," Recursion: ",Rektmp)
             absnodescopy = np.full_like(absnodes, 0)
             np.copyto(absnodescopy,absnodes)
+            SavedNodes[QValuesss] =  nodes[3][QValuesss]
         else:
             print("\t\t\t\tIndex QValue: ",QValuesss," Value: ",nodes[3][QValuesss]," Recursion: ",Rektmp)
-        if(Rektmp==False):
-            tmpNodes3Values[QValuesss] =  nodes[3][QValuesss]
+
+            
         
     # 4 Q Values zwischenspeichern und Q-Value fkt rekursiv rufen
-    gefunden = False
-    QValues = 0
+    found = False
+    Qvalue = 0
     if future > 0:
         future=future-1
       
-        for QValues in range(len(nodes[3])):
+        for Qvalue in range(len(nodes[3])):
             # der wahrscheinlichste nächste Zustand 
-            gefunden= False
+            found= False
             wslZustand = 0
             wslZustandCount = 0
-            for entry in history:
-                if (observation==entry[0] and QValues==entry[1]):
-                    if entry[3] > wslZustandCount:
-                        wslZustand = entry[2]
-                        wslZustandCount = entry[3]
+            for Entry in History:
+                if (observation==Entry[0] and Qvalue==Entry[1]):
+                    if Entry[3] > wslZustandCount:
+                        wslZustand = Entry[2]
+                        wslZustandCount = Entry[3]
                         # Rekursiv aufrufen von QValue, Rückgabe von QValue nötig! keine Aktion
                         rek = True
-                        gefunden = True
-            if(gefunden==True):
-                print("\t\tOutputnode at ",QValues," = ",nodes[3][QValues])
-                newQ = Qvalue(weights, wslZustand, history, rek, future, future_rate, newZug, False)
-                tmpNodes3Values[QValues] = (tmpNodes3Values[QValues] +  future_rate*newQ)/2 # Future rate wegen Bellmann -> Zukunft ist nicht immer gleich # 
-                print("\t\Future: ",future," Index QValue: ",QValues," Value: ",nodes[3][QValues])
+                        found = True
+            if(found==True):
+                print("\t\tOutputnode at ",Qvalue," = ",nodes[3][Qvalue])
+                newQvalue = getQvalue(weights, wslZustand, History, rek, future, future_rate, newZug, False)
+                SavedNodes[Qvalue] = (SavedNodes[Qvalue] +  future_rate*newQvalue)/2 # Future rate wegen Bellmann -> Zukunft ist nicht immer gleich # 
+                print("\t\Future: ",future," Index QValue: ",Qvalue," Value: ",nodes[3][Qvalue])
             else:
-                tmpNodes3Values[QValues] = tmpNodes3Values[QValues]/2   
+                SavedNodes[Qvalue] = SavedNodes[Qvalue]/2   
     if(Rektmp == False):
         print("\t\tFuture end (MAIN)")
     else:
         print("\t\t\tFuture end: ",future)
     
-    for QValuess in range(0, len(nodes[3])):
+    for Qvalue in range(len(nodes[3])):
         if(Rektmp == False): 
-            print("\t\t\tIndex QValue: ",QValuess," Value: ",tmpNodes3Values[QValuess])
+            print("\t\t\tIndex QValue: ",Qvalue," Value: ",SavedNodes[Qvalue])
         else:
-            print("\t\t\t\tIndex QValue: ",QValuess," Value: ",tmpNodes3Values[QValuess])
+            print("\t\t\t\tIndex QValue: ",Qvalue," Value: ",SavedNodes[Qvalue])
     # 3. Outputs berechnen anhand von state und state + 1
     if(Rektmp == False):
-        if(rando==False):
-            newZug = [oldObs, np.argmax(tmpNodes3Values), tmpNodes3Values[np.argmax(tmpNodes3Values)], 0, absnodescopy] # Obs, Aktion, QValue, Reward, 
+        if(rand==False):
+            newZug = [oldObs, np.argmax(SavedNodes), SavedNodes[np.argmax(SavedNodes)], 0] # Obs, Aktion, QValue, Reward, 
         else:
-            nActiontmp = rm.randint(0,3)
-            newZug = [oldObs, nActiontmp, tmpNodes3Values[nActiontmp], 0, absnodescopy]
-        return newZug # np.argmax(tmpNodes3Values)
+            randAction = rm.randint(0,Outputlength-1)
+            newZug = [oldObs, randAction, SavedNodes[randAction], 0]
+        return newZug # np.argmax(SavedNodes)
     else:
         return nodes[3][np.argmax(nodes[3])]
     # 4. state + action in matrix speichern

@@ -4,11 +4,9 @@ Created on 01.09.2017
 @author: steffl&flemmig 
 '''
 
-import gym
 import numpy as np                 #Notwendig für die Matritzenrechnung
-import random                     #Notwendig fpr die gernerierung von Zufallszahlen
 import NeuralNetwork as nn        #Beinhaltet das Neurale Netz
-import math as m
+import math
 
 
 # Wenn Done und Reward=0 -> Loch dann ist Reward -1
@@ -19,55 +17,63 @@ import math as m
 
 # 1.1 Loss für einzelne Aktionen in History berechnen und anpassen
 # Idee von Andi
-def loss(GameHist):
-    for idxx, zug in enumerate(GameHist):
-                if (idxx == len(GameHist)-1):
-                    if(zug[len(zug)-2] == 1.0):
-                        for idx, zuege in enumerate(GameHist):
-                            if(idx != len(GameHist)-1):
-                                if(zuege[len(zuege)-2] == 0):
-                                    zuege[len(zuege)-2]=0.1 # ug[len(zug)-2]/10
-                    else:
-                        for idx, zuege in enumerate(GameHist):
-                            if(idx != len(GameHist)-1 ):
-                                if(zuege[len(zuege)-2] == 0):
-                                    zuege[len(zuege)-2]=-0.1
-                            else:
-                                zuege[len(zuege)-2]=-1
+def loss(ZugReverse):
+        #if(ZugReverse[len(ZugReverse)-1] == 1.0):
+        ZugReverse[len(ZugReverse)-2] = 0.1 #0.5*(ZugReverse[len(ZugReverse)-2])
+        return ZugReverse
+
+
     #print("Rewards angepasst")
     #nn.printHistory(GameHist)
 # Idee von Eddi 
 # 1.2 Gamma von i Berechnen = -L* Abl. von Aktivierungsfk(von Array tmp1) von Hidden Layers und Output
-def ouputcalc(GameHist):  # absnodes für die Größe des Arrays
-    for entry in GameHist:
-        absnodes = entry[4]
-    # Ziel: alle Absnodes zwischenspeicher... also großes Array mit 1 dim: länge der Game hist und ab der 2ten Dim abs nodes kopieren
-    
-	#LÄUFT [EDDIE]
-    BpropNodes = [[np.zeros(nn.Inputlenght),np.zeros(nn.amountNodesHL),np.zeros(nn.amountNodesHL),np.zeros(nn.Outputlength)] for GH in range(len(GameHist))]
-    for GameIndex in range(len(GameHist)):
-        LayerIndex = 0
-        while(LayerIndex < len(BpropNodes[GameIndex])):
-            NodeIndex = 0
-            while(NodeIndex < len(BpropNodes[GameIndex][LayerIndex])):
-                BpropNodes[GameIndex][LayerIndex][NodeIndex] = absnodes[LayerIndex][NodeIndex] 
-                NodeIndex+=1
-            LayerIndex+=1
-    #LÄUFT [EDDIE]
-	
-    for index, entry in enumerate(GameHist):
-        for i in range(len(BpropNodes[index][2])):
-            # wichtig: nur bei dem genommenen den Loss betrachen! alle anderen sind 0
-            if(entry[1] == np.argmax((entry[len(entry)-1])[2][i])):
-                BpropNodes[index][2][i] = entry[len(entry)-2] * m.atanh((entry[len(entry)-1])[2][1])
-    print("BpropNodes")
-    print(BpropNodes)
-    return None
+def createBpropNodes(): 
+    BpropNodes = [np.zeros(nn.Inputlenght),np.zeros(nn.AmountNodesHL),np.zeros(nn.AmountNodesHL),np.zeros(nn.Outputlength)] 
+    return BpropNodes
+
+def ouputcalc(BpropNodes ,ZugReverse, Index):  
+    for i in range(nn.Outputlength):
+        print("Entry : ",ZugReverse[1],"  i : ",i)          
+        if(ZugReverse[1] == i):    
+            print("Index : ", Index)
+            print("Entry: ",ZugReverse[len(ZugReverse)-2], " mal ",arcsigmoid((ZugReverse[len(ZugReverse)-1])[3][i])  )  
+            BpropNodes[Index][3][i] = ZugReverse[len(ZugReverse)-2] * arcsigmoid((ZugReverse[len(ZugReverse)-1])[3][i])
+            break
+    return BpropNodes
 
 
+def sigmoid(x): return 1 / (1 + np.exp(-x))
+def arcsigmoid(x): return sigmoid(1-sigmoid(x))
 # Ableitung von tanh
 
-     
+def NodesCalc(observation, weights, absnodesBool):
+    nodes = nn.getZeroNodes()
+    absnodes = nn.getZeroNodes()  
+    
+    # 1. Einzelne Nodes berechnen Nodematrix erstellen
+    # Inputs aus Observation in den InputLayer übernehmen
+    nodes[0][observation]=1
+    
+    # Berechne die Node Werte durch die Addition der Produkte aus weight und Node (beginne in Layer 1)
+    layer = 1
+    while(layer < len(nodes)):
+        # für jeden Node im Layer layer
+        node = 0
+        while(node < len(nodes[layer])):
+            # erhöhe den wert in nodes[layer][node] um jedes Produkt der Weights und deren Nodes von denen sie kommen
+            weight = 0
+            while(weight < len(weights[layer-1][node])):
+                # aktueller node += weight des Pfades (layer-1) * node im vorherigen Layer von dem der Pfad kommt
+                absnodes[layer][node]+=(weights[layer-1][node][weight]*nodes[layer-1][weight])
+                nodes[layer][node] = sigmoid(absnodes[layer][node])
+                weight+=1
+            node+=1
+        layer+=1
+    if(absnodesBool == True):
+        return absnodes 
+    else:
+        return nodes
+    
 # 2.1 Werte der einzelnen Nodes Berechnen  anhand  der ausgehenden weights + des nächsten Nodes  -> in neue Matrix speichern tmp3
 
 # 2.2 weights berechnen und änderung in Matrix schreiben

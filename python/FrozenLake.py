@@ -22,6 +22,7 @@ print("loading Spaces..")
 InputSum = env.observation_space
 OutputSum = env.action_space
 
+
 print("initializing weights and nodes matrix..")
 
 # Die Weight Matix wird initialisiert
@@ -38,7 +39,7 @@ nodes = nn.getZeroNodes()
 absnodes = nn.getZeroNodes()
 
 # Die History Matrix enthält alle "gespielten" Actions, also Welche Action in welcher Observation wie oft vor kam
-history = []
+History = []
 
 
 
@@ -68,6 +69,6 @@ if(nn.debug):
     print ()
     
 # Training Loop
-nn.train(env,5,weights, history)
+nn.learn(env,1,weights, History)
 
 
