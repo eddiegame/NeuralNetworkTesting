@@ -83,7 +83,7 @@ def learn(environment, episodes, weights, History):
             # Die durchgeführte Action wird gespeichert
             saveAction(History,LastObs,NextAction, observation)
         # für jeden Zug muss jetzt Bprop angewendet werden, und dazu die dementsprechenden Nodes übergeben!! benötigt werden absnodes des Zuges + weights
-        Bpropnodes = tr.createBpropNodes()
+        Bpropnodes = tr.createBpropNodes(len(GameHist))
         printHistory(GameHist)
         for Index, ZugReverse in enumerate(reversed(GameHist)):
             ZugReverse = tr.loss(ZugReverse)

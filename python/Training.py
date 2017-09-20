@@ -27,8 +27,8 @@ def loss(ZugReverse):
     #nn.printHistory(GameHist)
 # Idee von Eddi 
 # 1.2 Gamma von i Berechnen = -L* Abl. von Aktivierungsfk(von Array tmp1) von Hidden Layers und Output
-def createBpropNodes(): 
-    BpropNodes = [np.zeros(nn.Inputlenght),np.zeros(nn.AmountNodesHL),np.zeros(nn.AmountNodesHL),np.zeros(nn.Outputlength)] 
+def createBpropNodes(GameHistlength): 
+    BpropNodes = [[np.zeros(nn.Inputlenght),np.zeros(nn.AmountNodesHL),np.zeros(nn.AmountNodesHL),np.zeros(nn.Outputlength)] for g in range(GameHistlength)]
     return BpropNodes
 
 def ouputcalc(BpropNodes ,ZugReverse, Index, weights):  
