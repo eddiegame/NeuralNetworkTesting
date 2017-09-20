@@ -31,13 +31,14 @@ def createBpropNodes():
     BpropNodes = [np.zeros(nn.Inputlenght),np.zeros(nn.AmountNodesHL),np.zeros(nn.AmountNodesHL),np.zeros(nn.Outputlength)] 
     return BpropNodes
 
-def ouputcalc(BpropNodes ,ZugReverse, Index):  
+def ouputcalc(BpropNodes ,ZugReverse, Index, weights):  
     for i in range(nn.Outputlength):
         print("Entry : ",ZugReverse[1],"  i : ",i)          
         if(ZugReverse[1] == i):    
             print("Index : ", Index)
-            print("Entry: ",ZugReverse[len(ZugReverse)-2], " mal ",arcsigmoid((ZugReverse[len(ZugReverse)-1])[3][i])  )  
-            BpropNodes[Index][3][i] = ZugReverse[len(ZugReverse)-2] * arcsigmoid((ZugReverse[len(ZugReverse)-1])[3][i])
+            #print("Entry: ",ZugReverse[len(ZugReverse)-2], " mal ",arcsigmoid((ZugReverse[len(ZugReverse)-1])[3][i]))
+            absnodes = NodesCalc(ZugReverse[0], weights, True)  
+            BpropNodes[Index][3][i] = ZugReverse[len(ZugReverse)-2] * arcsigmoid(absnodes[3][i])
             break
     return BpropNodes
 
