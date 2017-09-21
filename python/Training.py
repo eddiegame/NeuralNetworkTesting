@@ -43,6 +43,10 @@ def loss(ZugReverse, futu_rate, weights, History):
 def createBpropNodes(GameHistlength): 
     BpropNodes = [[np.zeros(nn.Inputlenght),np.zeros(nn.AmountNodesHL),np.zeros(nn.AmountNodesHL),np.zeros(nn.Outputlength)] for g in range(GameHistlength)]
     return BpropNodes
+	
+def createBpropWeights(GameHistlength): 
+    BpropNodes = [[np.zeros((AmountNodesHL,Inputlenght)),np.zeros((AmountNodesHL,AmountNodesHL)),np.zeros((Outputlength,AmountNodesHL ))] for g in range(GameHistlength)]
+    return BpropNodes
 
 def ouputcalc(BpropNodes ,ZugReverse, Index, weights):  
     for i in range(nn.Outputlength):
