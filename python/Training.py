@@ -56,6 +56,30 @@ def ouputcalc(BpropNodes ,ZugReverse, Index, weights):
             break
     return BpropNodes
 
+def nodescalc(BpropNodes, ZugReverse,Index, weights):
+    AnzahlHiddenLa = 2
+    absnodes = NodesCalc(ZugReverse[0], weights, True, False) 
+    SumWeights = 0
+    #print(" Nodes Calc --------------------------------------")
+    for i in range(AnzahlHiddenLa,0,-1):
+        #print("\t außen i: ",i," --------------------------------------")
+        for j in range(0, len(BpropNodes[Index][i])):
+            #print("\t\t innen j: ",j," --------------------------------------")  # immer 17 durchläufe
+            for k in range(0, len(weights[i])): # erst 4 dann 17 durchläufe
+                #print("\t\t\t innen k: ",k," --------------------------------------")
+                SumWeights= SumWeights + weights[i][k][j-1]*BpropNodes[Index][i+1][k]
+            BpropNodes[Index][i][j] = arcsigmoid(absnodes[i][j]) * SumWeights
+            SumWeights = 0
+    #print("Nodes Calc- ENDE --------------------------------------")
+    BpropNodes[Index][0][ZugReverse[0]]=1
+    return BpropNodes
+
+def weightscalc(BpropNodes, ZugReverse, Index, Bpropweights):
+
+    
+    
+    
+    return Bpropweights
 
 def sigmoid(x): return 1 / (1 + np.exp(-x))
 def arcsigmoid(x): return sigmoid(1-sigmoid(x))
