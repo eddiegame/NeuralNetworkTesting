@@ -7,7 +7,7 @@ Created on 01.09.2017
 import numpy as np                 #Notwendig für die Matritzenrechnung
 import NeuralNetwork as nn        #Beinhaltet das Neurale Netz
 import math
-
+import random as rm
 
 # Wenn Done und Reward=0 -> Loch dann ist Reward -1
 # Wenn Done und Reward=1 -> Loch dann ist Reward 1
@@ -17,9 +17,22 @@ import math
 
 # 1.1 Loss für einzelne Aktionen in History berechnen und anpassen
 # Idee von Andi
-def loss(ZugReverse):
-        #if(ZugReverse[len(ZugReverse)-1] == 1.0):
-        ZugReverse[len(ZugReverse)-2] = 0.1 #0.5*(ZugReverse[len(ZugReverse)-2])
+def loss(ZugReverse, futu_rate, weights, History):
+        print("-------------------------------- loss ----------------------------")
+        wslZustandCount=0
+        wslZustand=ZugReverse[0]
+        print("obs: ", ZugReverse[0], " genommene Aktion: ", ZugReverse[1])
+        for Entry in History:
+                if (ZugReverse[0]==Entry[0] and ZugReverse[1]==Entry[1]):
+                    if Entry[3] > wslZustandCount:
+                        wslZustand = Entry[2]
+                        wslZustandCount = Entry[3]
+        print("wslZustand: ", wslZustand)
+        futuQvalue = NodesCalc(wslZustand, weights, False, True)
+        print("futuQValue : ", futuQvalue)
+        ZugReverse[4] = 0.5*(ZugReverse[3]+futu_rate*futuQvalue-ZugReverse[2])
+        print("loss: ", ZugReverse[4])
+        print("-------------------------------- Ende - loss ----------------------------")
         return ZugReverse
 
 
@@ -37,8 +50,9 @@ def ouputcalc(BpropNodes ,ZugReverse, Index, weights):
         if(ZugReverse[1] == i):    
             print("Index : ", Index)
             #print("Entry: ",ZugReverse[len(ZugReverse)-2], " mal ",arcsigmoid((ZugReverse[len(ZugReverse)-1])[3][i]))
-            absnodes = NodesCalc(ZugReverse[0], weights, True)  
-            BpropNodes[Index][3][i] = ZugReverse[len(ZugReverse)-2] * arcsigmoid(absnodes[3][i])
+            absnodes = NodesCalc(ZugReverse[0], weights, True, False) 
+
+            BpropNodes[Index][3][i] = -1*ZugReverse[4] * arcsigmoid(absnodes[3][i])
             break
     return BpropNodes
 
@@ -47,7 +61,7 @@ def sigmoid(x): return 1 / (1 + np.exp(-x))
 def arcsigmoid(x): return sigmoid(1-sigmoid(x))
 # Ableitung von tanh
 
-def NodesCalc(observation, weights, absnodesBool):
+def NodesCalc(observation, weights, absnodesBool, QValueBool):
     nodes = nn.getZeroNodes()
     absnodes = nn.getZeroNodes()  
     
@@ -73,7 +87,10 @@ def NodesCalc(observation, weights, absnodesBool):
     if(absnodesBool == True):
         return absnodes 
     else:
-        return nodes
+        if(QValueBool==True):
+            return nodes[len(nodes)-1][np.argmax(nodes[len(nodes)-1])]
+        else:
+            return nodes
     
 # 2.1 Werte der einzelnen Nodes Berechnen  anhand  der ausgehenden weights + des nächsten Nodes  -> in neue Matrix speichern tmp3
 

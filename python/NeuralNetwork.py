@@ -83,13 +83,15 @@ def learn(environment, episodes, weights, History):
             # Die durchgeführte Action wird gespeichert
             saveAction(History,LastObs,NextAction, observation)
         # für jeden Zug muss jetzt Bprop angewendet werden, und dazu die dementsprechenden Nodes übergeben!! benötigt werden absnodes des Zuges + weights
+
         Bpropnodes = tr.createBpropNodes(len(GameHist))
+
         printHistory(GameHist)
         for Index, ZugReverse in enumerate(reversed(GameHist)):
-            ZugReverse = tr.loss(ZugReverse)
+            ZugReverse = tr.loss(ZugReverse, future_rate, weights, History)
             BpropNodes = tr.ouputcalc(Bpropnodes, ZugReverse, Index, weights)
-            print("\tBpropNodes")
-            printHistory(BpropNodes)
+        print("\tBpropNodes")
+        printHistory(BpropNodes)
         #tr.ouputcalc(GameHist)
         # anpassen der muta_rate (Zufall wird weniger)
         # muta_rate=muta_rate-muta_rate_red  
@@ -210,10 +212,10 @@ def getQvalue(weights, observation, History, rek, future, future_rate, newZug, r
     # 3. Outputs berechnen anhand von state und state + 1
     if(Rektmp == False):
         if(rand==False):
-            newZug = [oldObs, np.argmax(SavedNodes), SavedNodes[np.argmax(SavedNodes)], 0] # Obs, Aktion, QValue, Reward, 
+            newZug = [oldObs, np.argmax(SavedNodes), SavedNodes[np.argmax(SavedNodes)], 0, 0] # Obs, Aktion, QValue, Reward, Loss 
         else:
             randAction = rm.randint(0,Outputlength-1)
-            newZug = [oldObs, randAction, SavedNodes[randAction], 0]
+            newZug = [oldObs, randAction, SavedNodes[randAction], 0, 0]
         return newZug # np.argmax(SavedNodes)
     else:
         return nodes[3][np.argmax(nodes[3])]
