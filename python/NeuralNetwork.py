@@ -89,11 +89,14 @@ def learn(environment, episodes, weights, History):
         printHistory(GameHist)
         for Index, ZugReverse in enumerate(reversed(GameHist)):
             ZugReverse = tr.loss(ZugReverse, future_rate, weights, History)
-            BpropNodes = tr.ouputcalc(Bpropnodes, ZugReverse, Index, weights)
-            BpropNodes = tr.nodescalc(Bpropnodes, ZugReverse, Index, weights)
-            
+            Bpropnodes = tr.ouputcalc(Bpropnodes, ZugReverse, Index, weights)
+            Bpropnodes = tr.nodescalc(Bpropnodes, ZugReverse, Index, weights)
+            Bpropweights = tr.weightscalc(Bpropnodes, ZugReverse, Index, Bpropweights, weights)
+            break
         print("\tBpropNodes")
-        printHistory(BpropNodes)
+        printHistory(Bpropnodes)
+        print("\tBpropWeights")
+        printHistory(Bpropweights)
         #tr.ouputcalc(GameHist)
         # anpassen der muta_rate (Zufall wird weniger)
         # muta_rate=muta_rate-muta_rate_red  

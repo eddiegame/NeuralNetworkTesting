@@ -45,7 +45,7 @@ def createBpropNodes(GameHistlength):
     return BpropNodes
 	
 def createBpropWeights(GameHistlength): 
-    BpropNodes = [[np.zeros((AmountNodesHL,Inputlenght)),np.zeros((AmountNodesHL,AmountNodesHL)),np.zeros((Outputlength,AmountNodesHL ))] for g in range(GameHistlength)]
+    BpropNodes = [[np.zeros((nn.AmountNodesHL,nn.Inputlenght)),np.zeros((nn.AmountNodesHL,nn.AmountNodesHL)),np.zeros((nn.Outputlength,nn.AmountNodesHL ))] for g in range(GameHistlength)]
     return BpropNodes
 
 def ouputcalc(BpropNodes ,ZugReverse, Index, weights):  
@@ -78,11 +78,20 @@ def nodescalc(BpropNodes, ZugReverse,Index, weights):
     BpropNodes[Index][0][ZugReverse[0]]=1
     return BpropNodes
 
-def weightscalc(BpropNodes, ZugReverse, Index, Bpropweights):
-
-    
-    
-    
+def weightscalc(BpropNodes, ZugReverse, Index, Bpropweights, weights):
+    nodes = NodesCalc(ZugReverse[0], weights, False, False) 
+    for i in range(0, len(Bpropweights[Index])):  # durchläuft die einzelnen 2D Weight Arrays
+        print("i :",i)
+        print("länge Array j ", len(Bpropweights[Index][i]))
+        for j in range(0, len(Bpropweights[Index][i])): #durchläuft die einzelnen Rows (untereinander)
+            print("\tj :",j)
+            print("\tlänge Array k ", len(Bpropweights[Index][i][j]))
+            for k in range(0, len(Bpropweights[Index][i][j])): #durchläuft Inhalte in den Rows
+                print("\t\tk :",k)
+                tmp1 = nodes[i][k]
+                tmp2 = BpropNodes[Index][i+1][j] 
+                Bpropweights[Index][i][j][k] = tmp1 * tmp2 
+                print("\t\t\t Berechnung (",i,",",j,",",k,") = ",tmp1,"*",tmp2)
     return Bpropweights
 
 def sigmoid(x): return 1 / (1 + np.exp(-x))
