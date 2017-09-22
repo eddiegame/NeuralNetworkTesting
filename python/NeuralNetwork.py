@@ -8,6 +8,7 @@ import numpy as np
 import random as rm
 import math
 import Training as tr
+import csv, io
 
 Inputlenght = 16                #Anzahl der Inputs (Observation) Hardgecoded
 Outputlength = 4                #Anzahl der Output (Actions) Hardgecoded
@@ -19,35 +20,42 @@ Zug = 0
 # Variablen: lear_rate gibt die Lerngeschwindigkeit an, muta_rate wie oft Zufallsaktionen genommen werden
 # muta_rate_red um wie viel die muta_rate pro episode abnimmt, Zukunft wie viel Schritte in die Zukunft geschaut wird
 # future_rate wie schwer die Werte aus der Zukunft mit ins Gewicht fallen
-lear_rate       = 0.5
-Zukunft         = 1
-future_rate     = 0.3
 
+#12 wins nach ca 400 mit learn 0.2 und futu 0.7
+#70 wins nach ca 1600 mit " 0.05 und futu 0.7
+#46 wins nach ca 1600 mit " 0.01 und futu 0.7
+#24 wins nach ca 1600 mit " 0.01 und futu 0.5
 def getZeroNodes():
     return [np.zeros(Inputlenght),np.zeros(AmountNodesHL),np.zeros(AmountNodesHL),np.zeros(Outputlength)]
 def getZeroWeights():
     return [np.zeros((AmountNodesHL,Inputlenght)),np.zeros((AmountNodesHL,AmountNodesHL)),np.zeros((Outputlength,AmountNodesHL ))]
    
-def sigmoid(x): return 1 / (1 + np.exp(-x))
+def sigmoid(x): 
+    x = np.clip(x,-500,500)
+    return 1.0 / (1 + np.exp(-x))
 
 def tanh(x): return math.tanh(x)
 
-def learn(environment, episodes, weights, History):
+def learn(environment, episodes, weights, History, lear_rate, Zukunft, future_rate, IndexThread):
+    
     env = environment
     # saveChanges speichert alle veränderungen der Gewichte nach jedem Weightschange Vorgang
     saveChanges = getZeroWeights()
-    muta_rate       = 0.7
-    muta_rate_red   = 0.01
+    muta_rate       = 0.3
+    muta_rate_red   = 0.00000001
+    randcount = 0
+    wincount=0
     #Durchlaufe alle Episoden die übergeben werden
     for e in range(episodes):
         observation = env.reset()   #Environemnt zurücksetzen
+        #env.render()
         done = False
         move = 0
         # newZug ist eine Liste, bei der von einem Zug obs, aktion, QValue, Reward und Loss für GameHist zwischengespeichert werden
         newZug= None
         if(debug==True):
             print("## Episode: ",e,"##################################################################################")    
-        print("Episode:\t",e)
+        #print("Episode:\t",e,"\t\t Muta_rate: ",muta_rate)
         GameHist.clear()            
         while(done == False):       #Druchlaufe die Schleife, bis entweder das Ziel oder ein Hole erreicht wird
             # Das Environemnt wird dargestellt
@@ -64,8 +72,10 @@ def learn(environment, episodes, weights, History):
                 print("\tCalculating Next Action by Qvalue...")
             if(rm.uniform(0,1)>muta_rate):
                 newZug = getQvalue(weights,observation, History, rek, Zukunft, future_rate, newZug, False)
+   
             else: 
                 newZug = getQvalue(weights,observation, History, rek, 0, future_rate, newZug, True)
+                randcount = randcount+1
                 if(debug==True):
                     print("\tRandom")
                 
@@ -80,6 +90,9 @@ def learn(environment, episodes, weights, History):
             
             # Die beste Action wird ausgeführt
             observation, reward, done, info = env.step(NextAction)
+            #env.render()
+            if(reward==1.0):
+                wincount=wincount+1
             for Index, Zug in enumerate(GameHist):
                 if (Index == len(GameHist)-1):
                     Zug[len(Zug)-2] = int(reward)
@@ -93,7 +106,7 @@ def learn(environment, episodes, weights, History):
         # Arrays für Nodes und Weights für die Berechnungen im  Bprop werden init
         Bpropnodes = tr.createBpropNodes(len(GameHist))
         Bpropweights = tr.createBpropWeights(len(GameHist))
-        print("\tReward: ",reward,"\tafter ",len(GameHist)," move(s)")
+        #print("\tReward: ",reward,"\tafter ",len(GameHist)," move(s)")
         if(debug==True):
             print("GameHist") 
             printHistory(GameHist)
@@ -101,12 +114,18 @@ def learn(environment, episodes, weights, History):
             printHistory(weights)
         #für jeden Eintrag in GameHist(von hinten angefangen) wird das Netz trainiert.
         for Index, ZugReverse in enumerate(reversed(GameHist)):
+            if(ZugReverse[3]==1.0):
+                for Index,Zug in enumerate(GameHist):
+                    if(Index<len(GameHist)-1):
+                        Zug[3]=0.1
             ZugReverse = tr.loss(ZugReverse, future_rate, weights, History)
-            print("\t\tZug: ",Index,"\tError(Loss): ",ZugReverse[4])
+            #print("\t\tZug: ",Index,"\tError(Loss): ",ZugReverse[4])
             Bpropnodes = tr.ouputcalc(Bpropnodes, ZugReverse, Index, weights)
             Bpropnodes = tr.Bpropnodescalc(Bpropnodes, ZugReverse, Index, weights)
             Bpropweights = tr.weightscalc(Bpropnodes, ZugReverse, Index, Bpropweights, weights)
             weights = tr.weigthchange(Bpropweights, weights, lear_rate, muta_rate, saveChanges, Index)
+        
+        randcount=0
         if(debug==True):
             print("weights Ende:")
             printHistory(weights)
@@ -116,9 +135,17 @@ def learn(environment, episodes, weights, History):
             printHistory(Bpropweights)
 
         # anpassen der muta_rate (Zufall wird weniger)
-        muta_rate=muta_rate-muta_rate_red  
-        
+        if(muta_rate>0.05 ):
+            muta_rate=muta_rate-muta_rate_red  
+        else:
+            muta_rate=0
     # Die History wird ausgegeben
+    text= str(IndexThread) + ";" + str(lear_rate) + ";" + str(future_rate) + ";" + str(episodes) + ";" + str(wincount) + "\n"
+    text_file=open("resultnn.csv", "a")
+    text_file.write(text)
+    text_file.close
+    
+    print("\t\tGewonnenGesammt: ",wincount)
     if(debug==True):       
         printHistory(History)
     

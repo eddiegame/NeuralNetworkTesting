@@ -80,6 +80,8 @@ def Bpropnodescalc(BpropNodes, ZugReverse,Index, weights):
                 if(nn.debug==True):
                     print("\t\t\t innen k: ",k," --------------------------------------")
                 SumWeights= SumWeights + weights[i][k][j-1]*BpropNodes[Index][i+1][k]
+                #if(weights[i][k][j-1] < 0):
+                    #print("kleiner null!!!")
             BpropNodes[Index][i][j] = arcsigmoid(absnodes[i][j]) * SumWeights
             SumWeights = 0
     if(nn.debug==True):

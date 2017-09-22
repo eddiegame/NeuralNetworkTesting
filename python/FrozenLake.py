@@ -67,7 +67,23 @@ if(nn.debug):
     print ()
     
 # Training Loop, Ep gibt die Anzahl der zu durchlaufenden Episoden an
-Ep = 100
-nn.learn(env,Ep,weights, History)
 
+    
+lear_rate       = 0.3  
+Zukunft         = 1
+future_rate     = 0.7
+Ep = 500
+weightssave=weights
+for i in range(1,20):
+    future_rate     = 0.7
+    for j in range(1,30):
+        print("Durchlauf ",i,"/",j," von 20/30")
+        nn.learn(env,Ep,weights, History, lear_rate, Zukunft, future_rate, i)
+        weights=weightssave
+        future_rate= future_rate - 0.01
+    lear_rate=lear_rate-0.01
+print("ENDE")
 
+#ToDo:
+#mehrere Threads aufrufbar mit verschiedenen learn rates 
+#gui etc
