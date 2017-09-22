@@ -7,7 +7,7 @@ Created on 01.09.2017
 import gym
 import random                     #Notwendig fpr die gernerierung von Zufallszahlen
 import NeuralNetwork as nn        #Beinhaltet das Neurale Netz
-
+import datetime
 
 if __name__ == '__main__':
     pass
@@ -69,21 +69,25 @@ if(nn.debug):
 # Training Loop, Ep gibt die Anzahl der zu durchlaufenden Episoden an
 
     
-lear_rate       = 0.3  
+lear_rate       = 0.1 
 Zukunft         = 1
-future_rate     = 0.7
-Ep = 500
+future_rate     = 0.3
+Ep = 20000
+file = "resultnn" + str(datetime.date.today()) + ".csv"
+print("in File: " + file)
 weightssave=weights
-for i in range(1,20):
-    future_rate     = 0.7
-    for j in range(1,30):
-        print("Durchlauf ",i,"/",j," von 20/30")
-        nn.learn(env,Ep,weights, History, lear_rate, Zukunft, future_rate, i)
-        weights=weightssave
-        future_rate= future_rate - 0.01
-    lear_rate=lear_rate-0.01
-print("ENDE")
+#for i in range(1,15):
+    #future_rate     = 0.7
+    #for j in range(1,15):
+        #print("Durchlauf ",i,"/",j," von 20/30")
+nn.learn(env,Ep,weights, History, lear_rate, Zukunft, future_rate, i, file)
+        #weights=weightssave
+        #future_rate= future_rate - 0.01
+    #lear_rate=lear_rate-0.01
+#print("ENDE")
 
 #ToDo:
+#die besten weiterlaufen lassen
+#Loss beispiel berechnen per hand
 #mehrere Threads aufrufbar mit verschiedenen learn rates 
-#gui etc
+#gui etc, env besser sichtbarmachen!

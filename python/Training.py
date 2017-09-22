@@ -17,7 +17,7 @@ import random as rm
 
 # 1.1 Loss für einzelne Aktionen in History berechnen und anpassen
 # Idee von Andi
-def loss(ZugReverse, futu_rate, weights, History):
+def loss(ZugReverse, futu_rate, weights, History, lear_rate):
         if(nn.debug==True):
             print("-------------------------------- loss ----------------------------")
         wslZustandCount=0
@@ -35,7 +35,8 @@ def loss(ZugReverse, futu_rate, weights, History):
         futuQvalue = NodesCalc(wslZustand, weights, False, True)
         if(nn.debug==True):
             print("futuQValue : ", futuQvalue)
-        ZugReverse[4] = 0.5*(ZugReverse[3]+futu_rate*futuQvalue-ZugReverse[2])
+        ZugReverse[4] = ZugReverse[2]+lear_rate*(ZugReverse[3]+futu_rate*futuQvalue-ZugReverse[2])
+        print(ZugReverse[4],"=",ZugReverse[2],"+",lear_rate,"*(",ZugReverse[3],"+",futu_rate,"*",futuQvalue,"-",ZugReverse[2])
         if(nn.debug==True):
             print("loss: ", ZugReverse[4])
         if(nn.debug==True):
@@ -123,7 +124,9 @@ def weigthchange(Bpropweights, weights, learn_rate, muta_rate, saveChangInweight
                 weights[i][j][k]=weights[i][j][k]+deltatmp
                 saveChangInweights[i][j][k] = deltatmp
     return weights
-def sigmoid(x): return 1 / (1 + np.exp(-x))
+def sigmoid(x): 
+    x = np.clip(x,-500,500)
+    return 1 / (1 + np.exp(-x))
 def arcsigmoid(x): return sigmoid(1-sigmoid(x))
 # Ableitung von tanh
 
