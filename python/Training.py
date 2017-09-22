@@ -18,28 +18,31 @@ import random as rm
 # 1.1 Loss für einzelne Aktionen in History berechnen und anpassen
 # Idee von Andi
 def loss(ZugReverse, futu_rate, weights, History):
-        print("-------------------------------- loss ----------------------------")
+        if(nn.debug==True):
+            print("-------------------------------- loss ----------------------------")
         wslZustandCount=0
         wslZustand=ZugReverse[0]
-        print("obs: ", ZugReverse[0], " genommene Aktion: ", ZugReverse[1])
+        if(nn.debug==True):
+            print("obs: ", ZugReverse[0], " genommene Aktion: ", ZugReverse[1])
         for Entry in History:
                 if (ZugReverse[0]==Entry[0] and ZugReverse[1]==Entry[1]):
                     if Entry[3] > wslZustandCount:
                         wslZustand = Entry[2]
                         wslZustandCount = Entry[3]
-        print("wslZustand: ", wslZustand)
+        
+        if(nn.debug==True):
+            print("wslZustand: ", wslZustand)
         futuQvalue = NodesCalc(wslZustand, weights, False, True)
-        print("futuQValue : ", futuQvalue)
+        if(nn.debug==True):
+            print("futuQValue : ", futuQvalue)
         ZugReverse[4] = 0.5*(ZugReverse[3]+futu_rate*futuQvalue-ZugReverse[2])
-        print("loss: ", ZugReverse[4])
-        print("-------------------------------- Ende - loss ----------------------------")
+        if(nn.debug==True):
+            print("loss: ", ZugReverse[4])
+        if(nn.debug==True):
+            print("-------------------------------- Ende - loss ----------------------------")
         return ZugReverse
 
 
-    #print("Rewards angepasst")
-    #nn.printHistory(GameHist)
-# Idee von Eddi 
-# 1.2 Gamma von i Berechnen = -L* Abl. von Aktivierungsfk(von Array tmp1) von Hidden Layers und Output
 def createBpropNodes(GameHistlength): 
     BpropNodes = [[np.zeros(nn.Inputlenght),np.zeros(nn.AmountNodesHL),np.zeros(nn.AmountNodesHL),np.zeros(nn.Outputlength)] for g in range(GameHistlength)]
     return BpropNodes
@@ -47,53 +50,77 @@ def createBpropNodes(GameHistlength):
 def createBpropWeights(GameHistlength): 
     BpropNodes = [[np.zeros((nn.AmountNodesHL,nn.Inputlenght)),np.zeros((nn.AmountNodesHL,nn.AmountNodesHL)),np.zeros((nn.Outputlength,nn.AmountNodesHL ))] for g in range(GameHistlength)]
     return BpropNodes
-
+# 1.2 Gamma von i Berechnen = -L* Abl. von Aktivierungsfk(von Array tmp1) von Hidden Layers und Output
 def ouputcalc(BpropNodes ,ZugReverse, Index, weights):  
     for i in range(nn.Outputlength):
-        print("Entry : ",ZugReverse[1],"  i : ",i)          
+        if(nn.debug==True):
+            print("Entry : ",ZugReverse[1],"  i : ",i)          
         if(ZugReverse[1] == i):    
-            print("Index : ", Index)
-            #print("Entry: ",ZugReverse[len(ZugReverse)-2], " mal ",arcsigmoid((ZugReverse[len(ZugReverse)-1])[3][i]))
+            if(nn.debug==True):
+                print("Index : ", Index)
             absnodes = NodesCalc(ZugReverse[0], weights, True, False) 
 
             BpropNodes[Index][3][i] = -1*ZugReverse[4] * arcsigmoid(absnodes[3][i])
             break
     return BpropNodes
-
-def nodescalc(BpropNodes, ZugReverse,Index, weights):
+# 2.1 Werte der einzelnen Nodes Berechnen  anhand  der ausgehenden weights + des nächsten Nodes 
+def Bpropnodescalc(BpropNodes, ZugReverse,Index, weights):
     AnzahlHiddenLa = 2
     absnodes = NodesCalc(ZugReverse[0], weights, True, False) 
     SumWeights = 0
-    #print(" Nodes Calc --------------------------------------")
+    if(nn.debug==True):
+        print(" Nodes Calc --------------------------------------")
     for i in range(AnzahlHiddenLa,0,-1):
-        #print("\t außen i: ",i," --------------------------------------")
+        if(nn.debug==True):
+            print("\t außen i: ",i," --------------------------------------")
         for j in range(0, len(BpropNodes[Index][i])):
-            #print("\t\t innen j: ",j," --------------------------------------")  # immer 17 durchläufe
+            if(nn.debug==True):
+                print("\t\t innen j: ",j," --------------------------------------")  # immer 17 durchläufe
             for k in range(0, len(weights[i])): # erst 4 dann 17 durchläufe
-                #print("\t\t\t innen k: ",k," --------------------------------------")
+                if(nn.debug==True):
+                    print("\t\t\t innen k: ",k," --------------------------------------")
                 SumWeights= SumWeights + weights[i][k][j-1]*BpropNodes[Index][i+1][k]
             BpropNodes[Index][i][j] = arcsigmoid(absnodes[i][j]) * SumWeights
             SumWeights = 0
-    #print("Nodes Calc- ENDE --------------------------------------")
+    if(nn.debug==True):
+        print("Nodes Calc- ENDE --------------------------------------")
     BpropNodes[Index][0][ZugReverse[0]]=1
     return BpropNodes
-
+# 2.2 weights berechnen 
 def weightscalc(BpropNodes, ZugReverse, Index, Bpropweights, weights):
     nodes = NodesCalc(ZugReverse[0], weights, False, False) 
     for i in range(0, len(Bpropweights[Index])):  # durchläuft die einzelnen 2D Weight Arrays
-        print("i :",i)
-        print("länge Array j ", len(Bpropweights[Index][i]))
+        if(nn.debug==True):
+            print("i :",i)
+        if(nn.debug==True):
+            print("länge Array j ", len(Bpropweights[Index][i]))
         for j in range(0, len(Bpropweights[Index][i])): #durchläuft die einzelnen Rows (untereinander)
-            print("\tj :",j)
-            print("\tlänge Array k ", len(Bpropweights[Index][i][j]))
+            if(nn.debug==True):
+                print("\tj :",j)
+            if(nn.debug==True):
+                print("\tlänge Array k ", len(Bpropweights[Index][i][j]))
             for k in range(0, len(Bpropweights[Index][i][j])): #durchläuft Inhalte in den Rows
-                print("\t\tk :",k)
+                if(nn.debug==True):
+                    print("\t\tk :",k)
                 tmp1 = nodes[i][k]
                 tmp2 = BpropNodes[Index][i+1][j] 
                 Bpropweights[Index][i][j][k] = tmp1 * tmp2 
-                print("\t\t\t Berechnung (",i,",",j,",",k,") = ",tmp1,"*",tmp2)
+                if(nn.debug==True):
+                    print("\t\t\t Berechnung (",i,",",j,",",k,") = ",tmp1,"*",tmp2)
     return Bpropweights
 
+# 3 Backprop anwenden!
+def weigthchange(Bpropweights, weights, learn_rate, muta_rate, saveChangInweights, Index):
+    for i in range(0, len(weights)): #geht weight arrays ab
+        for j in range(0, len(weights[i])): #geht Rows ab
+            for k in range(0,len(weights[i][j])): # einzelne Inhalte einer Row
+                deltatmp = 0
+                tmp1 = learn_rate*Bpropweights[Index][i][j][k]
+                tmp2 = saveChangInweights[i][j][k]
+                deltatmp = tmp1 + muta_rate*tmp2
+                weights[i][j][k]=weights[i][j][k]+deltatmp
+                saveChangInweights[i][j][k] = deltatmp
+    return weights
 def sigmoid(x): return 1 / (1 + np.exp(-x))
 def arcsigmoid(x): return sigmoid(1-sigmoid(x))
 # Ableitung von tanh
@@ -129,8 +156,7 @@ def NodesCalc(observation, weights, absnodesBool, QValueBool):
         else:
             return nodes
     
-# 2.1 Werte der einzelnen Nodes Berechnen  anhand  der ausgehenden weights + des nächsten Nodes  -> in neue Matrix speichern tmp3
 
-# 2.2 weights berechnen und änderung in Matrix schreiben
 
-# 3 Backprop anwenden!
+
+

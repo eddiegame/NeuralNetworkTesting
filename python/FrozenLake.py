@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 '''
 Created on 01.09.2017
-@author: steffl&flemmig du spast asdf dfg
+@author: steffl&flemmig 
 '''
 
 import gym
@@ -26,8 +26,6 @@ OutputSum = env.action_space
 print("initializing weights and nodes matrix..")
 
 # Die Weight Matix wird initialisiert
-# Weights[Layer][Ziel][Quelle]
-# weights = [np.zeros((amountNodesHL,Inputlenght)),np.zeros((amountNodesHL,amountNodesHL)),np.zeros((Outputlength,amountNodesHL ))]
 weights = nn.getZeroWeights()
 
 # Die Nodematrix enthält die Nodewerte welche durch die Sigmoid Funktion normalisiert wurden
@@ -51,7 +49,7 @@ for i in range(3):
     for x in range(len(weights[i])):
         for y in range(len(weights[i][x])):
             weights[i][x][y] = random.uniform(0, 0.5)
-            '''print(weights[i][x][y])'''
+
 
     
 print("weights randomly initliaized")
@@ -68,7 +66,8 @@ if(nn.debug):
     print(weights[2])
     print ()
     
-# Training Loop
-nn.learn(env,1,weights, History)
+# Training Loop, Ep gibt die Anzahl der zu durchlaufenden Episoden an
+Ep = 100
+nn.learn(env,Ep,weights, History)
 
 
