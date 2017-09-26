@@ -2,6 +2,11 @@
 '''
 Created on 01.09.2017
 @author: steffl&flemmig 
+Best 32 aus 2000 l= 0.05 f=0.7 1.5%
+2.   61 aus 5000 l= 0.05 f=0.7 1.2%
+3.   54 aus 5000 l= 0.1 f=0.7 1.08%
+4.   35 aus 5000 l= 0.8 f=0.7
+5.   50 aus 5000 l=0.05 f=0.7
 '''
 
 import gym
@@ -69,9 +74,9 @@ if(nn.debug):
 # Training Loop, Ep gibt die Anzahl der zu durchlaufenden Episoden an
 
     
-lear_rate       = 0.1 
+lear_rate       = 0.05
 Zukunft         = 1
-future_rate     = 0.3
+future_rate     = 0.7
 Ep = 20000
 file = "resultnn" + str(datetime.date.today()) + ".csv"
 print("in File: " + file)
@@ -87,6 +92,9 @@ nn.learn(env,Ep,weights, History, lear_rate, Zukunft, future_rate, i, file)
 #print("ENDE")
 
 #ToDo:
+#weights davor und danach ausgeben lassen und selbst aussrechnen ob richtig verbessert wird
+# Problem: solange muta_rate hoch is steigt die Win Anzahl, wenns low wird dann bleiben die Wins komplett aus!
+# Idee: Weights werden nicht, oder nur schlecht angepasst! oder falsch angepasst
 #die besten weiterlaufen lassen
 #Loss beispiel berechnen per hand
 #mehrere Threads aufrufbar mit verschiedenen learn rates 

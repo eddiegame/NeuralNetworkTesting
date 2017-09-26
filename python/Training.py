@@ -35,7 +35,7 @@ def loss(ZugReverse, futu_rate, weights, History, lear_rate):
         futuQvalue = NodesCalc(wslZustand, weights, False, True)
         if(nn.debug==True):
             print("futuQValue : ", futuQvalue)
-        ZugReverse[4] = ZugReverse[2]+lear_rate*(ZugReverse[3]+futu_rate*futuQvalue-ZugReverse[2])
+        ZugReverse[4] = lear_rate*(ZugReverse[3]+futu_rate*futuQvalue-ZugReverse[2])  # am anfang: ZugReverse[2]+
         print(ZugReverse[4],"=",ZugReverse[2],"+",lear_rate,"*(",ZugReverse[3],"+",futu_rate,"*",futuQvalue,"-",ZugReverse[2])
         if(nn.debug==True):
             print("loss: ", ZugReverse[4])
@@ -61,7 +61,7 @@ def ouputcalc(BpropNodes ,ZugReverse, Index, weights):
                 print("Index : ", Index)
             absnodes = NodesCalc(ZugReverse[0], weights, True, False) 
 
-            BpropNodes[Index][3][i] = -1*ZugReverse[4] * arcsigmoid(absnodes[3][i])
+            BpropNodes[Index][3][i] = ZugReverse[4] * arcsigmoid(absnodes[3][i]) 
             break
     return BpropNodes
 # 2.1 Werte der einzelnen Nodes Berechnen  anhand  der ausgehenden weights + des nächsten Nodes 
@@ -118,8 +118,13 @@ def weigthchange(Bpropweights, weights, learn_rate, muta_rate, saveChangInweight
         for j in range(0, len(weights[i])): #geht Rows ab
             for k in range(0,len(weights[i][j])): # einzelne Inhalte einer Row
                 deltatmp = 0
-                tmp1 = learn_rate*Bpropweights[Index][i][j][k]
+
+                if(Bpropweights[Index][i][j][k] != 0.0):
+                    tmp1 = learn_rate*Bpropweights[Index][i][j][k]
+                else:
+                    tmp1 = 0
                 tmp2 = saveChangInweights[i][j][k]
+                
                 deltatmp = tmp1 + muta_rate*tmp2
                 weights[i][j][k]=weights[i][j][k]+deltatmp
                 saveChangInweights[i][j][k] = deltatmp

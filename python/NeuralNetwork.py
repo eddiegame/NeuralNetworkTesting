@@ -38,12 +38,13 @@ def sigmoid(x):
 def tanh(x): return math.tanh(x)
 
 def learn(environment, episodes, weights, History, lear_rate, Zukunft, future_rate, IndexThread, filenamecsv):
-    
+    Graph = []
+    NoWinSince = 0
     env = environment
     # saveChanges speichert alle veränderungen der Gewichte nach jedem Weightschange Vorgang
     saveChanges = getZeroWeights()
     muta_rate       = 0.99
-    muta_rate_red   = 0.0001
+    muta_rate_red   = 0.001
     randcount = 0
     wincount=0
     #Durchlaufe alle Episoden die übergeben werden
@@ -107,25 +108,43 @@ def learn(environment, episodes, weights, History, lear_rate, Zukunft, future_ra
         # Arrays für Nodes und Weights für die Berechnungen im  Bprop werden init
         Bpropnodes = tr.createBpropNodes(len(GameHist))
         Bpropweights = tr.createBpropWeights(len(GameHist))
-        print("\tReward: ",reward,"\tafter ",len(GameHist)," move(s)")
+        print("\tReward: ",reward,"\tafter ",len(GameHist)," move(s)"," Gewonnen insg. ", wincount)
+        if(len(GameHist)==100):
+            printHistory(GameHist)
         if(debug==True):
             print("GameHist") 
             printHistory(GameHist)
             print("weights Anfang:")
             printHistory(weights)
         #für jeden Eintrag in GameHist(von hinten angefangen) wird das Netz trainiert.
+        winTr = False
         for Index, ZugReverse in enumerate(reversed(GameHist)):
             if(ZugReverse[3]==1.0):
+                winTr = True
+                Graph.append(NoWinSince)
+                NoWinSince=0
                 for Index,Zug in enumerate(GameHist):
                     if(Index<len(GameHist)-1):
-                        Zug[3]=0.1
+                        ZugReverse[3]=1.0
+            if(winTr == False):
+                NoWinSince=NoWinSince+1
+                print("\t\t\t\t\tno win since: ",NoWinSince)
+                break
+            if(NoWinSince>500):
+                printHistory(GameHist)
+            #print("Durchgang(Rueckwaerts): ",Index)
+            #print("\tObservation: ",ZugReverse[0])
+            #print("\t\tvorher:")
+            #printHistory(weights)
             ZugReverse = tr.loss(ZugReverse, future_rate, weights, History, lear_rate)
-            print("\t\tZug: ",Index,"\tError(Loss): ",ZugReverse[4]," Gewonnen insg. ", wincount)
+            #print("\t\tZug: ",Index,"\tError(Loss): ",ZugReverse[4]," Gewonnen insg. ", wincount)
             Bpropnodes = tr.ouputcalc(Bpropnodes, ZugReverse, Index, weights)
             Bpropnodes = tr.Bpropnodescalc(Bpropnodes, ZugReverse, Index, weights)
             Bpropweights = tr.weightscalc(Bpropnodes, ZugReverse, Index, Bpropweights, weights)
             weights = tr.weigthchange(Bpropweights, weights, lear_rate, muta_rate, saveChanges, Index)
-        
+            #print("\t\tnachher:")
+            #printHistory(weights)
+            
         randcount=0
         if(debug==True):
             print("weights Ende:")
@@ -140,6 +159,8 @@ def learn(environment, episodes, weights, History, lear_rate, Zukunft, future_ra
             muta_rate=muta_rate-muta_rate_red  
         else:
             muta_rate=0
+    print("Graph")
+    printHistory(Graph)
     # Die History wird ausgegeben
     #text= str(IndexThread) + ";" + str(lear_rate) + ";" + str(future_rate) + ";" + str(episodes) + ";" + str(wincount) + "\n"
     
